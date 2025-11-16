@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.mayte.huellitas_callejeras.Screens.InicioSesion
+import com.mayte.huellitas_callejeras.navegacion.NavManager
 import com.mayte.huellitas_callejeras.ui.theme.Huellitas_callejerasTheme
 
 class MainActivity : ComponentActivity() {
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Huellitas_callejerasTheme {
-              InicioSesion()
+              NavManager()
             }
         }
     }

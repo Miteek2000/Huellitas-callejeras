@@ -13,18 +13,18 @@ class GaleriaViewModel : ViewModel() {
     init {
         // Datos de ejemplo
         _patients.value = listOf(
-            Patient(1, "Max", "Chihuahua", "", isVaccinated = true),
+            Patient(1, "Max", "Chihuahua", "", isAdopted = true),
             Patient(2, "Max", "Chihuahua", ""),
             Patient(3, "Max", "Chihuahua", ""),
             Patient(4, "Max", "Chihuahua", ""),
-            Patient(5, "Max", "Chihuahua", "", isVaccinated = true),
+            Patient(5, "Max", "Chihuahua", "", isAdopted = true),
             Patient(6, "Max", "Chihuahua", ""),
         )
     }
 
     fun addPatient() {
         val newId = (_patients.value.maxOfOrNull { it.id } ?: 0) + 1
-        val newPatient = Patient(newId, "Nuevo", "Mestizo", "", isVaccinated = false)
+        val newPatient = Patient(newId, "Nuevo", "Mestizo", "", isAdopted = false)
         _patients.value = _patients.value + newPatient
     }
 

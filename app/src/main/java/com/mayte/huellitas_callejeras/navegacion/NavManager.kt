@@ -14,6 +14,8 @@ fun NavManager(){
     composable(AppScreens.InicioSesion.route) {
         InicioSesion(navController)
     }
-
+    composable(AppScreens.GaleriaScreen.route) {
+        GaleriaScreen(navController)
+    }
   }
 }
