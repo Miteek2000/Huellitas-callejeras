@@ -20,12 +20,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.mayte.huellitas_callejeras.R
+import com.mayte.huellitas_callejeras.navegacion.AppScreens
 import com.mayte.huellitas_callejeras.ui.theme.pink1
 import com.mayte.huellitas_callejeras.ui.theme.purple1
 
 @Composable
-fun InicioSesion() {
+fun InicioSesion(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -70,7 +72,7 @@ fun InicioSesion() {
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = { navController.navigate(AppScreens.GaleriaScreen.route) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF5B2D5B)
                     )
