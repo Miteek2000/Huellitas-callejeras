@@ -13,6 +13,10 @@ val Pink40 = Color(0xFF7D5260)
 val pink1 = Color(0xFFF7D0E2)
 val purple1 = Color(0xFFCEA1D0)
 
-val  pink2 = Color(0xFF5B2D5B)
+val pink2 = Color(0xFF5B2D5B)
 
 val white = Color(0xFFECDCE4)
+
+val topBarColor = Color(0xFF632C50)
+val circle = Color(0xFF7AB659)
+val circle2 = Color(0xFFD68EBC)
