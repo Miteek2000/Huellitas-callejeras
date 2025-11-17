@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -36,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mayte.huellitas_callejeras.R
 import com.mayte.huellitas_callejeras.models.Patient
+import com.mayte.huellitas_callejeras.navegacion.AppScreens
 import com.mayte.huellitas_callejeras.ui.theme.pink1
 import com.mayte.huellitas_callejeras.ui.theme.purple1
 import com.mayte.huellitas_callejeras.viewmodels.GaleriaViewModel
@@ -92,7 +92,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
                 }
                 Text(
                     text = "Galeria de expedientes",
@@ -106,7 +106,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(Color(0xFF7AB659))
-                    .clickable { galeriaViewModel.addPatient() }
+                    .clickable { navController.navigate(AppScreens.ExpedienteScreen.route + "?editable=true") }
                     .padding(4.dp),
                 tint = Color.White
             )
@@ -173,7 +173,11 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(patients) { patient ->
-                    PatientCard(patient = patient, onDelete = { galeriaViewModel.removePatient(patient) })
+                    PatientCard(
+                        patient = patient,
+                        onDelete = { galeriaViewModel.removePatient(patient) },
+                        navController = navController
+                    )
                 }
             }
         }
@@ -181,10 +185,12 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
 }
 
 @Composable
-fun PatientCard(patient: Patient, onDelete: () -> Unit) {
+fun PatientCard(patient: Patient, onDelete: () -> Unit, navController: NavController) {
     Card(
-        modifier = Modifier.clickable {  },
-        shape = RectangleShape,
+        modifier = Modifier.clickable {
+            navController.navigate(AppScreens.ExpedienteScreen.route + "?patientId=${patient.id}&editable=false")
+        },
+        shape = RoundedCornerShape(0.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF5F5F5)
         )
@@ -203,7 +209,7 @@ fun PatientCard(patient: Patient, onDelete: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = patient.name, fontWeight = FontWeight.Bold)
-                if (patient.isAdopted) {
+                if (patient.isVaccinated) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         painter = painterResource(id = R.drawable.huella),
