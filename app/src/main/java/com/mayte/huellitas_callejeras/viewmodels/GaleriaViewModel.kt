@@ -1,34 +1,86 @@
 package com.mayte.huellitas_callejeras.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.mayte.huellitas_callejeras.models.Patient
+import com.mayte.huellitas_callejeras.models.PatientRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+sealed class GaleriaNavTarget {
+    object InicioSesion : GaleriaNavTarget()
+    object CitasMedicas : GaleriaNavTarget()
+    object NuevoExpediente : GaleriaNavTarget()
+    data class Expediente(val patientId: Int) : GaleriaNavTarget()
+    data class GoBackWithResult(val patient: Patient) : GaleriaNavTarget()
+}
+
 
 class GaleriaViewModel : ViewModel() {
 
-    private val _patients = MutableStateFlow<List<Patient>>(emptyList())
-    val patients: StateFlow<List<Patient>> = _patients
+    private val _searchText = MutableStateFlow("")
+    val searchText = _searchText.asStateFlow()
 
-    init {
-        // Datos de ejemplo
-        _patients.value = listOf(
-            Patient(1, "Max", "Chihuahua", "", isAdopted = true),
-            Patient(2, "Max", "Chihuahua", ""),
-            Patient(3, "Max", "Chihuahua", ""),
-            Patient(4, "Max", "Chihuahua", ""),
-            Patient(5, "Max", "Chihuahua", "", isAdopted = true),
-            Patient(6, "Max", "Chihuahua", ""),
+    private val _allPatients = PatientRepository.patients
+
+    val patients: StateFlow<List<Patient>> = searchText
+        .combine(_allPatients) { text, patients ->
+            if (text.isBlank()) {
+                patients
+            } else {
+                patients.filter {
+                    it.name.contains(text, ignoreCase = true) || it.id.toString().contains(text)
+                }
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            _allPatients.value
         )
-    }
 
-    fun addPatient() {
-        val newId = (_patients.value.maxOfOrNull { it.id } ?: 0) + 1
-        val newPatient = Patient(newId, "Nuevo", "Mestizo", "", isAdopted = false)
-        _patients.value = _patients.value + newPatient
+    private val _navEvents = MutableSharedFlow<GaleriaNavTarget>()
+    val navEvents = _navEvents.asSharedFlow()
+
+    fun onSearchTextChange(text: String) {
+        _searchText.value = text
     }
 
     fun removePatient(patient: Patient) {
-        _patients.value = _patients.value.filter { it.id != patient.id }
+        PatientRepository.removePatient(patient.id)
+    }
+
+    // Navigation triggers
+    fun onHomeClicked() {
+        viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
+    }
+
+    fun onCalendarClicked() {
+        viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.CitasMedicas) }
+    }
+
+    fun onBackClicked() {
+         viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
+    }
+
+    fun onAddClicked() {
+        viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.NuevoExpediente) }
+    }
+
+    fun onPatientClicked(patient: Patient, from: String?) {
+        viewModelScope.launch {
+            if (from == "citas") {
+                _navEvents.emit(GaleriaNavTarget.GoBackWithResult(patient))
+            } else {
+                _navEvents.emit(GaleriaNavTarget.Expediente(patient.id))
+            }
+        }
     }
 }

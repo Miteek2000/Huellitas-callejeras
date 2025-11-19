@@ -1,5 +1,8 @@
-package com.mayte.huellitas_callejeras.Screens
+package com.mayte.huellitas_callejeras.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,9 +61,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.mayte.huellitas_callejeras.R
+import com.mayte.huellitas_callejeras.navegacion.AppScreens
 import com.mayte.huellitas_callejeras.ui.theme.pink1
 import com.mayte.huellitas_callejeras.ui.theme.purple1
 import com.mayte.huellitas_callejeras.viewmodels.ExpedienteViewModel
@@ -69,13 +73,20 @@ import com.mayte.huellitas_callejeras.viewmodels.ExpedienteViewModel
 @Composable
 fun ExpedienteScreen(
     navController: NavController,
-    patientId: String?,
-    isEditable: Boolean,
-    viewModel: ExpedienteViewModel = viewModel()
+    viewModel: ExpedienteViewModel,
+    patientId: Int?,
+    isEditable: Boolean
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
     val datePickerState = rememberDatePickerState()
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            uri?.let { viewModel.onImageSelected(it) }
+        }
+    )
 
     if (uiState.showDatePickerDialogFor != null) {
         DatePickerDialog(
@@ -106,14 +117,14 @@ fun ExpedienteScreen(
                 title = { Text("Huellitas Callejeras") },
                 navigationIcon = {
                     Row {
-                        IconButton(onClick = { /* TODO: Navigate home */ }) {
+                        IconButton(onClick = { navController.navigate(AppScreens.GaleriaScreen.route) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.home),
                                 contentDescription = "Home",
                                 tint = Color.White
                             )
                         }
-                        IconButton(onClick = { /* TODO: Navigate to calendar */ }) {
+                        IconButton(onClick = { navController.navigate(AppScreens.CitasMedicasScreen.route) }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.calender),
                                 contentDescription = "Calendar",
@@ -173,8 +184,11 @@ fun ExpedienteScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
                 IconButton(
-                    onClick = { viewModel.setEditing(true) },
-                    enabled = !uiState.isEditing,
+                    onClick = {
+                        if (!uiState.isEditing) {
+                            viewModel.setEditing(true)
+                        }
+                    },
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
                     Image(
@@ -197,7 +211,7 @@ fun ExpedienteScreen(
                     item {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
-                                modifier = Modifier.size(80.dp),
+                                modifier = Modifier.size(80.dp).clickable(enabled = uiState.isEditing) { imagePickerLauncher.launch("image/*") },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Box(
@@ -206,14 +220,12 @@ fun ExpedienteScreen(
                                         .clip(CircleShape)
                                         .background(Color(0xFF7AB659))
                                 )
-
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize(0.9f)
                                         .clip(CircleShape)
                                         .background(Color.White)
                                 )
-
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize(0.8f)
@@ -226,6 +238,16 @@ fun ExpedienteScreen(
                                     tint = Color.White,
                                     modifier = Modifier.size(36.dp)
                                 )
+                                if (uiState.selectedImageUri != null) {
+                                    AsyncImage(
+                                        model = uiState.selectedImageUri,
+                                        contentDescription = "Patient Image",
+                                        modifier = Modifier
+                                            .fillMaxSize(0.8f)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.fillMaxWidth()) {
@@ -380,7 +402,7 @@ fun ExpedienteScreen(
                                 Button(
                                     onClick = {
                                         viewModel.savePatient()
-                                        viewModel.setEditing(false)
+                                        navController.navigate(AppScreens.GaleriaScreen.route)
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659))
@@ -388,7 +410,13 @@ fun ExpedienteScreen(
                                     Text("Guardar", fontSize = 16.sp, color = Color.White)
                                 }
                                 Button(
-                                    onClick = { viewModel.init(patientId, false) },
+                                    onClick = {
+                                        if (patientId != null) {
+                                            viewModel.init(patientId, false)
+                                        } else {
+                                            navController.popBackStack()
+                                        }
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
                                 ) {

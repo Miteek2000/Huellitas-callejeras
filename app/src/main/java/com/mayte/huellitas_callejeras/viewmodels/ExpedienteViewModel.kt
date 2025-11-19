@@ -1,6 +1,9 @@
 package com.mayte.huellitas_callejeras.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
+import com.mayte.huellitas_callejeras.models.Patient
+import com.mayte.huellitas_callejeras.models.PatientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -14,10 +17,29 @@ class ExpedienteViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ExpedienteUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun init(patientId: String?, isEditable: Boolean) {
-        // TODO: Load patient from repository if patientId is not null
-        // For now, this resets the state.
-        _uiState.value = ExpedienteUiState(isEditing = isEditable)
+    fun init(patientId: Int?, isEditable: Boolean) {
+        if (patientId != null) {
+            val patient = PatientRepository.getPatientById(patientId)
+            if (patient != null) {
+                _uiState.value = ExpedienteUiState(
+                    id = patient.id,
+                    nombre = patient.name,
+                    raza = patient.breed,
+                    isAdopted = patient.isAdopted,
+                    isRecovering = patient.isRecovering,
+                    condicionesRescate = patient.description,
+                    estadoSelected = when {
+                        patient.isAdopted -> "Adoptado"
+                        patient.isRecovering -> "En recuperación"
+                        else -> "En adopción"
+                    },
+                    selectedImageUri = if (patient.imageUrl.isNotEmpty()) Uri.parse(patient.imageUrl) else null,
+                    isEditing = isEditable
+                )
+            }
+        } else {
+            _uiState.value = ExpedienteUiState(isEditing = isEditable)
+        }
     }
 
     fun onNombreChange(nombre: String) {
@@ -61,7 +83,11 @@ class ExpedienteViewModel : ViewModel() {
     }
 
     fun onEstadoSelected(estado: String) {
-        _uiState.update { it.copy(estadoSelected = estado) }
+        _uiState.update { it.copy(
+            estadoSelected = estado,
+            isAdopted = estado == "Adoptado",
+            isRecovering = estado == "En recuperación"
+        ) }
     }
 
     fun onEstadoExpandedChange(isExpanded: Boolean) {
@@ -72,8 +98,22 @@ class ExpedienteViewModel : ViewModel() {
         _uiState.update { it.copy(isEditing = isEditing) }
     }
 
-    fun savePatient() {
+    fun onImageSelected(uri: Uri) {
+        _uiState.update { it.copy(selectedImageUri = uri) }
+    }
 
+    fun savePatient() {
+        val currentState = _uiState.value
+        val patient = Patient(
+            id = currentState.id ?: 0,
+            name = currentState.nombre,
+            breed = currentState.raza,
+            isAdopted = currentState.isAdopted,
+            isRecovering = currentState.isRecovering,
+            description = currentState.condicionesRescate,
+            imageUrl = currentState.selectedImageUri.toString(),
+        )
+        PatientRepository.savePatient(patient)
     }
 
     fun onShowDatePickerDialog(forField: String?) {
@@ -96,11 +136,12 @@ class ExpedienteViewModel : ViewModel() {
 }
 
 data class ExpedienteUiState(
+    val id: Int? = null,
     val nombre: String = "",
-    val especie: String = "Perro",
+    val especie: String = "",
     val raza: String = "",
     val edad: String = "",
-    val sexo: String = "Macho",
+    val sexo: String = "",
     val peso: String = "",
     val fechaIngreso: String = "",
     val fechaSalida: String = "",
@@ -108,7 +149,10 @@ data class ExpedienteUiState(
     val condicionesRescate: String = "",
     val estadoSelected: String = "En adopción",
     val estadoExpanded: Boolean = false,
+    val isAdopted: Boolean = false,
+    val isRecovering: Boolean = false,
     val isEditing: Boolean = false,
+    val selectedImageUri: Uri? = null,
     val showDatePickerDialogFor: String? = null,
     val estadoOptions: List<String> = listOf("Adoptado", "En adopción", "En recuperación"),
     val especieOptions: List<String> = listOf("Perro", "Gato"),

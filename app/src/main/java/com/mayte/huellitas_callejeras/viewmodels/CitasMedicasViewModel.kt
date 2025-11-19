@@ -1,0 +1,179 @@
+package com.mayte.huellitas_callejeras.viewmodels
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.mayte.huellitas_callejeras.models.Cita
+import com.mayte.huellitas_callejeras.models.Patient
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import kotlin.random.Random
+
+private var allAppointments = mutableListOf(
+    Cita(id = 1, title = "Vacunación Puppy", date = "25/07/2024", place = "Veterinaria 'El Roble'", realizationDate = "", patientName = "Puppy", patientId = 1),
+    Cita(id = 2, title = "Chequeo general", date = "25/07/2024", place = "Mi Casa", realizationDate = "", patientName = "Manchas", patientId = 2),
+    Cita(id = 3, title = "Desparasitación", date = "28/07/2024", place = "Veterinaria 'El Roble'", realizationDate = "", patientName = "Luna", patientId = 3),
+)
+
+data class CitasUiState(
+    val calendar: Calendar = Calendar.getInstance(),
+    val appointmentsForSelectedDate: List<Cita> = emptyList(),
+    val datesWithAppointments: Set<String> = emptySet(),
+    val cita: Cita? = null
+)
+
+sealed class CitasNavTarget {
+    data object Galeria : CitasNavTarget()
+    data object CitasMedicas : CitasNavTarget()
+    data object EditarCita : CitasNavTarget()
+    data class Expediente(val patientId: Int) : CitasNavTarget()
+    data class GaleriaParaSeleccion(val from: String) : CitasNavTarget()
+}
+
+class CitasMedicasViewModel : ViewModel() {
+
+    private val _uiState = MutableStateFlow(CitasUiState())
+    val uiState = _uiState.asStateFlow()
+
+    private val _navEvents = MutableSharedFlow<CitasNavTarget>()
+    val navEvents = _navEvents.asSharedFlow()
+
+    init {
+        onDateSelected(System.currentTimeMillis())
+        updateDatesWithAppointments()
+    }
+
+    private fun updateDatesWithAppointments() {
+        val dates = allAppointments.map { it.date }.toSet()
+        _uiState.update { it.copy(datesWithAppointments = dates) }
+    }
+
+    fun onDateSelected(dateMillis: Long?) {
+        if (dateMillis == null) return
+
+        val formattedDate = formatDate(dateMillis)
+        val appointmentsForDay = allAppointments.filter { it.date == formattedDate }
+
+        _uiState.update { currentState ->
+            val newCalendar = currentState.calendar.apply { timeInMillis = dateMillis }
+            currentState.copy(
+                calendar = newCalendar,
+                appointmentsForSelectedDate = appointmentsForDay
+            )
+        }
+    }
+
+    fun onCitaChange(cita: Cita) {
+        _uiState.update { it.copy(cita = cita) }
+    }
+
+    fun saveCita() {
+        _uiState.value.cita?.let { citaToSave ->
+            val index = allAppointments.indexOfFirst { it.id == citaToSave.id }
+            if (index != -1) {
+                allAppointments[index] = citaToSave
+            } else {
+                allAppointments.add(citaToSave)
+            }
+            val dateMillis = try {
+                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(citaToSave.date)?.time
+            } catch (e: Exception) {
+                _uiState.value.calendar.timeInMillis
+            }
+            onDateSelected(dateMillis)
+            updateDatesWithAppointments()
+        }
+    }
+
+    private fun onEditCita(cita: Cita) {
+        _uiState.update { it.copy(cita = cita) }
+    }
+
+    private fun onAddNewCita() {
+        val newCita = Cita(
+            id = Random.nextInt(),
+            title = "",
+            date = formatDate(_uiState.value.calendar.timeInMillis),
+            place = "",
+            realizationDate = "",
+            patientName = "",
+            motive = ""
+        )
+        _uiState.update { it.copy(cita = newCita) }
+    }
+
+    fun deleteCita(cita: Cita) {
+        allAppointments.removeAll { it.id == cita.id }
+        onDateSelected(_uiState.value.calendar.timeInMillis)
+        updateDatesWithAppointments()
+    }
+
+    fun onPatientSelected(patient: Patient) {
+        _uiState.value.cita?.let { currentCita ->
+            val updatedCita = currentCita.copy(patientId = patient.id, patientName = patient.name)
+            _uiState.update { it.copy(cita = updatedCita) }
+            saveCita() // Save the updated Cita
+        }
+    }
+
+    private fun formatDate(dateMillis: Long?): String {
+        if (dateMillis == null) return ""
+        val date = Date(dateMillis)
+        val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return format.format(date)
+    }
+
+    fun onMonthChanged(forward: Boolean) {
+        _uiState.update { currentState ->
+            val newCalendar = currentState.calendar.clone() as Calendar
+            newCalendar.add(Calendar.MONTH, if (forward) 1 else -1)
+            currentState.copy(calendar = newCalendar)
+        }
+    }
+
+    fun onYearChanged(year: Int) {
+        _uiState.update { currentState ->
+            val newCalendar = currentState.calendar.clone() as Calendar
+            newCalendar.set(Calendar.YEAR, year)
+            currentState.copy(calendar = newCalendar)
+        }
+    }
+
+    // Navigation triggers
+    fun onHomeClicked() {
+        viewModelScope.launch { _navEvents.emit(CitasNavTarget.Galeria) }
+    }
+
+    fun onCalendarClicked() {
+        viewModelScope.launch { _navEvents.emit(CitasNavTarget.CitasMedicas) }
+    }
+
+    fun onAddNewCitaClicked() {
+        onAddNewCita()
+        viewModelScope.launch { _navEvents.emit(CitasNavTarget.EditarCita) }
+    }
+
+    fun onEditCitaClicked(cita: Cita) {
+        onEditCita(cita)
+        viewModelScope.launch { _navEvents.emit(CitasNavTarget.EditarCita) }
+    }
+
+    fun onPatientIconClicked(cita: Cita) {
+        viewModelScope.launch {
+            if (cita.patientId != null) {
+                _navEvents.emit(CitasNavTarget.Expediente(cita.patientId))
+            } else {
+                // Store the cita being modified before navigating
+                _uiState.update { it.copy(cita = cita) }
+                _navEvents.emit(CitasNavTarget.GaleriaParaSeleccion("citas"))
+            }
+        }
+    }
+}

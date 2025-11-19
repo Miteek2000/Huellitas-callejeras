@@ -1,4 +1,4 @@
-package com.mayte.huellitas_callejeras.Screens
+package com.mayte.huellitas_callejeras.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,7 +27,7 @@ import com.mayte.huellitas_callejeras.ui.theme.pink1
 import com.mayte.huellitas_callejeras.ui.theme.purple1
 
 @Composable
-fun InicioSesion(navController: NavController) {
+fun InicioSesionScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
