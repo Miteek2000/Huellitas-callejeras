@@ -11,37 +11,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.paola.huellitascallejerasapp.ui.theme.HuellitasCallejerasAppTheme
+import com.proyecto.huellitas_callejeras.ui.theme.HuellitasCallejerasAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            _root_ide_package_.com.proyecto.huellitascallejerasapp.ui.theme.HuellitasCallejerasAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    _root_ide_package_.com.proyecto.huellitascallejerasapp.ui.theme.HuellitasCallejerasAppTheme {
-        Greeting("Android")
-    }
-}
