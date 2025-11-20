@@ -3,7 +3,7 @@ package com.proyecto.huellitas_callejeras.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proyecto.huellitas_callejeras.models.Cita
-import com.proyecto.huellitas_callejeras.models.Patient
+import com.proyecto.huellitas_callejeras.models.Animal
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -139,9 +139,9 @@ class CitasMedicasViewModel : ViewModel() {
         updateDatesWithAppointments()
     }
 
-    fun onPatientSelected(patient: Patient) {
+    fun onPatientSelected(animal: Animal) {
         _uiState.value.cita?.let { currentCita ->
-            val updatedCita = currentCita.copy(patientId = patient.id, patientName = patient.name)
+            val updatedCita = currentCita.copy(patientId = animal.id, patientName = animal.name)
             _uiState.update { it.copy(cita = updatedCita) }
             saveCita() // Save the updated Cita
         }

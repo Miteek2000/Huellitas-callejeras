@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mayte.huellitas_callejeras.R
-import com.proyecto.huellitas_callejeras.models.Patient
+import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1
@@ -74,7 +74,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 GaleriaNavTarget.NuevoExpediente -> navController.navigate(AppScreens.ExpedienteScreen.route + "?editable=true")
                 is GaleriaNavTarget.Expediente -> navController.navigate(AppScreens.ExpedienteScreen.route + "?patientId=${target.patientId}&editable=false")
                 is GaleriaNavTarget.GoBackWithResult -> {
-                    navController.previousBackStackEntry?.savedStateHandle?.set("patient", target.patient)
+                    navController.previousBackStackEntry?.savedStateHandle?.set("patient", target.animal)
                     navController.popBackStack()
                 }
             }
@@ -210,7 +210,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 ) {
                     items(patients) { patient ->
                         PatientCard(
-                            patient = patient,
+                            animal = patient,
                             onDelete = { galeriaViewModel.removePatient(patient) },
                             onPatientClick = { galeriaViewModel.onPatientClicked(patient, from) }
                         )
@@ -222,7 +222,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
 }
 
 @Composable
-fun PatientCard(patient: Patient, onDelete: () -> Unit, onPatientClick: () -> Unit) {
+fun PatientCard(animal: Animal, onDelete: () -> Unit, onPatientClick: () -> Unit) {
     Card(
         modifier = Modifier.clickable(onClick = onPatientClick),
         shape = RoundedCornerShape(0.dp),
@@ -236,25 +236,25 @@ fun PatientCard(patient: Patient, onDelete: () -> Unit, onPatientClick: () -> Un
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ejemploexpediente),
-                contentDescription = patient.name,
+                contentDescription = animal.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(126.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = patient.name, fontWeight = FontWeight.Bold)
+                Text(text = animal.name, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(4.dp))
-                if (patient.isRecovering || patient.isAdopted) {
+                if (animal.isRecovering || animal.isAdopted) {
                     Icon(
                         painter = painterResource(id = R.drawable.huella),
-                        contentDescription = if (patient.isRecovering) "En recuperación" else "Adoptado",
-                        tint = if (patient.isRecovering) Color.LightGray else Color(0xFF7AB659),
+                        contentDescription = if (animal.isRecovering) "En recuperación" else "Adoptado",
+                        tint = if (animal.isRecovering) Color.LightGray else Color(0xFF7AB659),
                         modifier = Modifier.size(16.dp)
                     )
                 }
             }
 
-            Text(text = patient.breed, color = Color.Gray)
+            Text(text = animal.breed, color = Color.Gray)
             Spacer(modifier = Modifier.height(8.dp))
             IconButton(onClick = onDelete) {
                 Icon(painter = painterResource(id = R.drawable.basura), contentDescription = "Delete", tint = Color.Gray)

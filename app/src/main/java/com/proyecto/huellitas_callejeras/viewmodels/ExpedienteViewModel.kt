@@ -2,7 +2,7 @@ package com.proyecto.huellitas_callejeras.viewmodels
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import com.proyecto.huellitas_callejeras.models.Patient
+import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.models.PatientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -104,7 +104,7 @@ class ExpedienteViewModel : ViewModel() {
 
     fun savePatient() {
         val currentState = _uiState.value
-        val patient = Patient(
+        val animal = Animal(
             id = currentState.id ?: 0,
             name = currentState.nombre,
             breed = currentState.raza,
@@ -113,7 +113,7 @@ class ExpedienteViewModel : ViewModel() {
             description = currentState.condicionesRescate,
             imageUrl = currentState.selectedImageUri.toString(),
         )
-        PatientRepository.savePatient(patient)
+        PatientRepository.savePatient(animal)
     }
 
     fun onShowDatePickerDialog(forField: String?) {

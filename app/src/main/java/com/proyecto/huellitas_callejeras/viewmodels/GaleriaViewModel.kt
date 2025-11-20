@@ -2,7 +2,7 @@ package com.proyecto.huellitas_callejeras.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.proyecto.huellitas_callejeras.models.Patient
+import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.models.PatientRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ sealed class GaleriaNavTarget {
     object CitasMedicas : GaleriaNavTarget()
     object NuevoExpediente : GaleriaNavTarget()
     data class Expediente(val patientId: Int) : GaleriaNavTarget()
-    data class GoBackWithResult(val patient: Patient) : GaleriaNavTarget()
+    data class GoBackWithResult(val animal: Animal) : GaleriaNavTarget()
 }
 
 
@@ -30,7 +30,7 @@ class GaleriaViewModel : ViewModel() {
 
     private val _allPatients = PatientRepository.patients
 
-    val patients: StateFlow<List<Patient>> = searchText
+    val patients: StateFlow<List<Animal>> = searchText
         .combine(_allPatients) { text, patients ->
             if (text.isBlank()) {
                 patients
@@ -53,8 +53,8 @@ class GaleriaViewModel : ViewModel() {
         _searchText.value = text
     }
 
-    fun removePatient(patient: Patient) {
-        PatientRepository.removePatient(patient.id)
+    fun removePatient(animal: Animal) {
+        PatientRepository.removePatient(animal.id)
     }
 
     // Navigation triggers
@@ -74,12 +74,12 @@ class GaleriaViewModel : ViewModel() {
         viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.NuevoExpediente) }
     }
 
-    fun onPatientClicked(patient: Patient, from: String?) {
+    fun onPatientClicked(animal: Animal, from: String?) {
         viewModelScope.launch {
             if (from == "citas") {
-                _navEvents.emit(GaleriaNavTarget.GoBackWithResult(patient))
+                _navEvents.emit(GaleriaNavTarget.GoBackWithResult(animal))
             } else {
-                _navEvents.emit(GaleriaNavTarget.Expediente(patient.id))
+                _navEvents.emit(GaleriaNavTarget.Expediente(animal.id))
             }
         }
     }

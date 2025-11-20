@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.proyecto.huellitas_callejeras.models.Patient
+import com.proyecto.huellitas_callejeras.models.Animal
 import com.mayte.huellitas_callejeras.screens.CitasMedicasScreen
 import com.mayte.huellitas_callejeras.screens.EditarCitaScreen
 import com.mayte.huellitas_callejeras.screens.ExpedienteScreen
@@ -53,11 +53,11 @@ fun NavManager() {
             ExpedienteScreen(navController, expedienteViewModel, patientIdOrNull, editable)
         }
         composable(AppScreens.CitasMedicasScreen.route) {
-            val patient = navController.currentBackStackEntry?.savedStateHandle?.get<Patient>("patient")
-            LaunchedEffect(patient) {
-                patient?.let {
+            val animal = navController.currentBackStackEntry?.savedStateHandle?.get<Animal>("patient")
+            LaunchedEffect(animal) {
+                animal?.let {
                     citasMedicasViewModel.onPatientSelected(it)
-                    navController.currentBackStackEntry?.savedStateHandle?.remove<Patient>("patient")
+                    navController.currentBackStackEntry?.savedStateHandle?.remove<Animal>("patient")
                 }
             }
             CitasMedicasScreen(navController, citasMedicasViewModel)

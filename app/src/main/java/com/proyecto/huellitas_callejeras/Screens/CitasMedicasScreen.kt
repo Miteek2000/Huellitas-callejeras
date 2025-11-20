@@ -45,7 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mayte.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.models.Cita
-import com.proyecto.huellitas_callejeras.models.Patient
+import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.Calendar
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
@@ -56,13 +56,13 @@ import com.proyecto.huellitas_callejeras.viewmodels.CitasNavTarget
 fun CitasMedicasScreen(navController: NavController, viewModel: CitasMedicasViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val patient = navController.currentBackStackEntry?.savedStateHandle?.get<Patient>("patient")
+    val animal = navController.currentBackStackEntry?.savedStateHandle?.get<Animal>("patient")
 
-    LaunchedEffect(patient) {
-        patient?.let {
+    LaunchedEffect(animal) {
+        animal?.let {
             viewModel.onPatientSelected(it)
             // Clear the result to avoid processing it again
-            navController.currentBackStackEntry?.savedStateHandle?.remove<Patient>("patient")
+            navController.currentBackStackEntry?.savedStateHandle?.remove<Animal>("patient")
         }
     }
 
