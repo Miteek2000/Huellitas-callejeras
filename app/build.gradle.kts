@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.paola.huellitascallejerasapp"
+    namespace = "com.proyecto.huellitas_callejeras"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.paola.huellitascallejerasapp"
+        applicationId = "com.proyecto.huellitas_callejeras"
         minSdk = 29
         targetSdk = 36
         versionCode = 1

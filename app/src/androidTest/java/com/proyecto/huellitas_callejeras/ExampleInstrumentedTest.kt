@@ -1,4 +1,4 @@
-package com.paola.huellitascallejerasapp
+package com.proyecto.huellitas_callejeras
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

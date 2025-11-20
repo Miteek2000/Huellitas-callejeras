@@ -1,4 +1,4 @@
-package com.paola.huellitascallejerasapp
+package com.proyecto.huellitas_callejeras
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            HuellitasCallejerasAppTheme {
+            _root_ide_package_.com.proyecto.huellitascallejerasapp.ui.theme.HuellitasCallejerasAppTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
                         name = "Android",
@@ -41,7 +41,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    HuellitasCallejerasAppTheme {
+    _root_ide_package_.com.proyecto.huellitascallejerasapp.ui.theme.HuellitasCallejerasAppTheme {
         Greeting("Android")
     }
 }
