@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HuellitasCallejerasApp"
+rootProject.name = "Huellitas_callejeras"
 include(":app")
- 
