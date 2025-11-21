@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.dto
+package com.proyecto.huellitas_callejeras.remote.dto
 
 data class AnimalDto(
     val id_animalito: String,
@@ -6,6 +6,17 @@ data class AnimalDto(
     val raza: String?,
     val sexo: String,
     val fecha_salida: String?,
+    val estado: String,
+    val nombre: String,
+    val edad: Int,
+    val especie: String,
+    val urlImagen: String
+)
+
+data class AnimalRequest(
+    val peso: Double,
+    val raza: String?,
+    val sexo: String,
     val estado: String,
     val nombre: String,
     val edad: Int,
