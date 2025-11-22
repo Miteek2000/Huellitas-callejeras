@@ -1,4 +1,4 @@
-package com.example.huellitas_callejeras.data.model
+package com.proyecto.huellitas_callejeras.data.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -19,8 +19,9 @@ data class Medicamento(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val tratamientoId: Int,
-    val nombre: String,
-    val fechaConclusion: String,
-    val dosis: String,
-    val repeticion: String
+    val nombre: String = "",
+    val fechaInicio: String = "",
+    val fechaConclusion: String = "",
+    val dosis: String = "",
+    val repeticion: String = ""
 )

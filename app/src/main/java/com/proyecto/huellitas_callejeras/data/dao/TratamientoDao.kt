@@ -1,8 +1,8 @@
-package com.example.huellitas_callejeras.data.dao
+package com.proyecto.huellitas_callejeras.data.dao
 
 import androidx.room.*
-import com.example.huellitas_callejeras.data.model.Tratamiento
-import com.example.huellitas_callejeras.data.model.TratamientoConMedicamentos
+import com.proyecto.huellitas_callejeras.data.model.Tratamiento
+import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
 import kotlinx.coroutines.flow.Flow
 
 @Dao

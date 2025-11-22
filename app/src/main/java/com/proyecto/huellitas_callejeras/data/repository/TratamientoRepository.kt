@@ -1,10 +1,10 @@
-package com.example.huellitas_callejeras.data.repository
+package com.proyecto.huellitas_callejeras.data.repository
 
-import com.example.huellitas_callejeras.data.dao.MedicamentoDao
-import com.example.huellitas_callejeras.data.dao.TratamientoDao
-import com.example.huellitas_callejeras.data.model.Medicamento
-import com.example.huellitas_callejeras.data.model.Tratamiento
-import com.example.huellitas_callejeras.data.model.TratamientoConMedicamentos
+import com.proyecto.huellitas_callejeras.data.dao.MedicamentoDao
+import com.proyecto.huellitas_callejeras.data.dao.TratamientoDao
+import com.proyecto.huellitas_callejeras.data.model.Medicamento
+import com.proyecto.huellitas_callejeras.data.model.Tratamiento
+import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
 import kotlinx.coroutines.flow.Flow
 
 class TratamientoRepository(
@@ -27,8 +27,8 @@ class TratamientoRepository(
         tratamientoDao.eliminarTratamiento(tratamiento)
     }
 
-    suspend fun insertarMedicamento(medicamento: Medicamento): Long {
-        return medicamentoDao.insertarMedicamento(medicamento)
+    suspend fun insertarMedicamento(medicamento: Medicamento) {
+        medicamentoDao.insertarMedicamento(medicamento)
     }
 
     suspend fun actualizarMedicamento(medicamento: Medicamento) {

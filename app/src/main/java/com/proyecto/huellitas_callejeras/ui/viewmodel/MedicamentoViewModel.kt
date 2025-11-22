@@ -1,11 +1,11 @@
-package com.example.huellitas_callejeras.ui.viewmodel
+package com.proyecto.huellitas_callejeras.ui.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.huellitas_callejeras.data.model.Medicamento
-import com.example.huellitas_callejeras.data.repository.TratamientoRepository
+import com.proyecto.huellitas_callejeras.data.model.Medicamento
+import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,16 +14,19 @@ import kotlinx.coroutines.launch
 data class MedicamentoFormState(
     val medicamentoId: Int? = null,
     val nombre: String = "",
+    val fechaInicio: String = "",
     val fechaConclusion: String = "",
     val dosis: String = "",
     val repeticion: String = "",
     val nombreError: String = "",
+    val fechaInicioError: String = "",
     val fechaError: String = "",
     val dosisError: String = "",
     val repeticionError: String = ""
 ) {
     fun isValid(): Boolean {
         return nombre.isNotEmpty() &&
+                fechaInicio.isNotEmpty() &&
                 fechaConclusion.isNotEmpty() &&
                 dosis.isNotEmpty() &&
                 repeticion.isNotEmpty()
@@ -39,16 +42,21 @@ class MedicamentoViewModel(
 
     fun cargarMedicamento(medicamentoId: Int) {
         viewModelScope.launch {
-            val medicamento = repository.obtenerMedicamentoPorId(medicamentoId)
-            medicamento?.let {
-                _formState.value = MedicamentoFormState(
-                    medicamentoId = it.id,
-                    nombre = it.nombre,
-                    fechaConclusion = it.fechaConclusion,
-                    dosis = it.dosis,
-                    repeticion = it.repeticion
-                )
-                Log.d("MedicamentoViewModel", "Medicamento cargado: ${it.nombre}")
+            try {
+                val medicamento = repository.obtenerMedicamentoPorId(medicamentoId)
+                medicamento?.let { med ->
+                    _formState.value = MedicamentoFormState(
+                        medicamentoId = med.id,
+                        nombre = med.nombre,
+                        fechaInicio = med.fechaInicio,
+                        fechaConclusion = med.fechaConclusion,
+                        dosis = med.dosis,
+                        repeticion = med.repeticion
+                    )
+                    Log.d("MedicamentoViewModel", "Medicamento cargado: ${med.nombre}")
+                }
+            } catch (e: Exception) {
+                Log.e("MedicamentoViewModel", "Error al cargar medicamento: ${e.message}", e)
             }
         }
     }
@@ -57,6 +65,13 @@ class MedicamentoViewModel(
         _formState.value = _formState.value.copy(
             nombre = valor,
             nombreError = ""
+        )
+    }
+
+    fun actualizarFechaInicio(valor: String) {
+        _formState.value = _formState.value.copy(
+            fechaInicio = valor,
+            fechaInicioError = ""
         )
     }
 
@@ -85,18 +100,21 @@ class MedicamentoViewModel(
         val state = _formState.value
 
         val nombreError = if (state.nombre.isEmpty()) "Campo obligatorio" else ""
+        val fechaInicioError = if (state.fechaInicio.isEmpty()) "Campo obligatorio" else ""
         val fechaError = if (state.fechaConclusion.isEmpty()) "Campo obligatorio" else ""
         val dosisError = if (state.dosis.isEmpty()) "Campo obligatorio" else ""
         val repeticionError = if (state.repeticion.isEmpty()) "Campo obligatorio" else ""
 
         _formState.value = state.copy(
             nombreError = nombreError,
+            fechaInicioError = fechaInicioError,
             fechaError = fechaError,
             dosisError = dosisError,
             repeticionError = repeticionError
         )
 
         return nombreError.isEmpty() &&
+                fechaInicioError.isEmpty() &&
                 fechaError.isEmpty() &&
                 dosisError.isEmpty() &&
                 repeticionError.isEmpty()
@@ -113,6 +131,7 @@ class MedicamentoViewModel(
                         id = _formState.value.medicamentoId ?: 0,
                         tratamientoId = tratamientoId,
                         nombre = _formState.value.nombre,
+                        fechaInicio = _formState.value.fechaInicio,
                         fechaConclusion = _formState.value.fechaConclusion,
                         dosis = _formState.value.dosis,
                         repeticion = _formState.value.repeticion
@@ -129,9 +148,11 @@ class MedicamentoViewModel(
                     limpiarFormulario()
                     onSuccess()
                 } catch (e: Exception) {
-                    Log.e("MedicamentoViewModel", "Error: ${e.message}", e)
+                    Log.e("MedicamentoViewModel", "Error al guardar: ${e.message}", e)
                 }
             }
+        } else {
+            Log.d("MedicamentoViewModel", "Validación falló")
         }
     }
 
@@ -143,9 +164,9 @@ class MedicamentoViewModel(
 class MedicamentoViewModelFactory(
     private val repository: TratamientoRepository
 ) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MedicamentoViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
             return MedicamentoViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -1,4 +1,4 @@
-package com.example.huellitas_callejeras.ui.utils
+package com.proyecto.huellitas_callejeras.ui.utils
 
 import java.text.SimpleDateFormat
 import java.util.*

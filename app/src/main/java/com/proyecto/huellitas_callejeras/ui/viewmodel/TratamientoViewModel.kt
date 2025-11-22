@@ -1,11 +1,11 @@
-package com.example.huellitas_callejeras.ui.viewmodel
+package com.proyecto.huellitas_callejeras.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.huellitas_callejeras.data.model.Tratamiento
-import com.example.huellitas_callejeras.data.model.TratamientoConMedicamentos
-import com.example.huellitas_callejeras.data.repository.TratamientoRepository
+import com.proyecto.huellitas_callejeras.data.model.Tratamiento
+import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
+import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 

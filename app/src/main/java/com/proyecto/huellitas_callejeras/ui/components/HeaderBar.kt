@@ -1,26 +1,33 @@
-package com.example.huellitas_callejeras.ui.components
+package com.proyecto.huellitas_callejeras.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.proyecto.huellitas_callejeras.R
 
 @Composable
 fun HeaderBar() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF6B4C7C))
+            .background(Color(0xFF642C51))
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -30,8 +37,8 @@ fun HeaderBar() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.Folder,
-                contentDescription = "Folder",
+                imageVector = Icons.Default.DateRange,
+                contentDescription = "Calendario",
                 tint = Color.White
             )
             Icon(
@@ -49,8 +56,19 @@ fun HeaderBar() {
 
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .background(Color(0xFFE8C5E8), shape = androidx.compose.foundation.shape.CircleShape)
-        )
+                .size(50.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE8C5E8)),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .scale(1.8f),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }

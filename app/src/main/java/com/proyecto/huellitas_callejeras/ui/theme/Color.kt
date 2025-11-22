@@ -1,4 +1,4 @@
-package com.example.huellitas_callejeras.ui.theme
+package com.proyecto.huellitas_callejeras.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

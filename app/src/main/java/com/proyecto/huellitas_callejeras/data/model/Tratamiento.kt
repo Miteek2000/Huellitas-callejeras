@@ -1,4 +1,4 @@
-package com.example.huellitas_callejeras.data.model
+package com.proyecto.huellitas_callejeras.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
