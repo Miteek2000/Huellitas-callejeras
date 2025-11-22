@@ -46,33 +46,44 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.mayte.huellitas_callejeras.R
+import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1
 import com.proyecto.huellitas_callejeras.viewmodels.GaleriaNavTarget
 import com.proyecto.huellitas_callejeras.viewmodels.GaleriaViewModel
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewModel = viewModel(), from: String? = null) {
+fun GaleriaScreen(
+    navController: NavController,
+    galeriaViewModel: GaleriaViewModel = viewModel(),
+    from: String? = null
+) {
     val patients by galeriaViewModel.patients.collectAsState()
     val searchText by galeriaViewModel.searchText.collectAsState()
 
+    // Navegación con eventos del ViewModel
     LaunchedEffect(Unit) {
         galeriaViewModel.navEvents.collect { target ->
             when (target) {
-                GaleriaNavTarget.InicioSesion -> navController.navigate(AppScreens.InicioSesion.route)
-                GaleriaNavTarget.CitasMedicas -> navController.navigate(AppScreens.CitasMedicasScreen.route)
-                GaleriaNavTarget.NuevoExpediente -> navController.navigate(AppScreens.ExpedienteScreen.route + "?editable=true")
-                is GaleriaNavTarget.Expediente -> navController.navigate(AppScreens.ExpedienteScreen.route + "?patientId=${target.patientId}&editable=false")
+                GaleriaNavTarget.InicioSesion ->
+                    navController.navigate(AppScreens.InicioSesion.route)
+
+                GaleriaNavTarget.CitasMedicas ->
+                    navController.navigate(AppScreens.CitasMedicasScreen.route)
+
+                GaleriaNavTarget.NuevoExpediente ->
+                    navController.navigate(AppScreens.ExpedienteScreen.route + "?editable=true")
+
+                is GaleriaNavTarget.Expediente ->
+                    navController.navigate(AppScreens.ExpedienteScreen.route + "?patientId=${target.patientId}&editable=false")
+
                 is GaleriaNavTarget.GoBackWithResult -> {
                     navController.previousBackStackEntry?.savedStateHandle?.set("patient", target.animal)
                     navController.popBackStack()
@@ -88,10 +99,18 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 navigationIcon = {
                     Row {
                         IconButton(onClick = galeriaViewModel::onHomeClicked) {
-                            Icon(painter = painterResource(id = R.drawable.home), contentDescription = "Home", tint = Color.White)
+                            Icon(
+                                painter = painterResource(id = R.drawable.home),
+                                contentDescription = "Home",
+                                tint = Color.White
+                            )
                         }
                         IconButton(onClick = galeriaViewModel::onCalendarClicked) {
-                            Icon(painter = painterResource(id = R.drawable.calender), contentDescription = "Calendar", tint = Color.White)
+                            Icon(
+                                painter = painterResource(id = R.drawable.calender),
+                                contentDescription = "Calendar",
+                                tint = Color.White
+                            )
                         }
                     }
                 },
@@ -99,10 +118,10 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                     Image(
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
-                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -118,12 +137,13 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 .padding(paddingValues)
                 .background(Color.White)
         ) {
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp)
+                    .padding(horizontal = 20.dp)
                     .background(Color(0xFFE8C6D4), shape = RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -131,7 +151,11 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = galeriaViewModel::onBackClicked) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
                     }
                     Text(
                         text = "Galeria de expedientes",
@@ -151,49 +175,34 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 )
             }
 
+            // --- Buscar ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(color = Color(0xFFE8C6D4), shape = RoundedCornerShape(12.dp))
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    TextField(
-                        value = searchText,
-                        onValueChange = galeriaViewModel::onSearchTextChange,
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        placeholder = { Text(
-                            "Buscar paciente por nombre o ID",
-                            color = Color.Gray,
-                            fontSize = 15.sp)
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.Search,
-                                contentDescription = "Search", tint = Color.Gray,
-                                modifier = Modifier.size(20.dp))
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 15.sp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            cursorColor = Color(0xFF5B2D5B),
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black
-                        )
+                TextField(
+                    value = searchText,
+                    onValueChange = galeriaViewModel::onSearchTextChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text("Buscar paciente por nombre o ID", color = Color.Gray, fontSize = 15.sp)
+                    },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Search, contentDescription = "Search", tint = Color.Gray)
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
                     )
-                }
+                )
             }
 
+            // --- LISTA ---
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -205,8 +214,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(patients) { patient ->
                         PatientCard(
@@ -222,42 +230,56 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
 }
 
 @Composable
-fun PatientCard(animal: Animal, onDelete: () -> Unit, onPatientClick: () -> Unit) {
+fun PatientCard(
+    animal: Animal,
+    onDelete: () -> Unit,
+    onPatientClick: () -> Unit
+) {
     Card(
         modifier = Modifier.clickable(onClick = onPatientClick),
         shape = RoundedCornerShape(0.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F5F5)
-        )
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Image(
                 painter = painterResource(id = R.drawable.ejemploexpediente),
-                contentDescription = animal.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(126.dp)
+                contentDescription = animal.nombre,
+                modifier = Modifier.size(126.dp),
+                contentScale = ContentScale.Crop
             )
+
             Spacer(modifier = Modifier.height(8.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = animal.name, fontWeight = FontWeight.Bold)
+                Text(text = animal.nombre, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(4.dp))
-                if (animal.isRecovering || animal.isAdopted) {
+
+                if (animal.estado == "adoptado") {
                     Icon(
                         painter = painterResource(id = R.drawable.huella),
-                        contentDescription = if (animal.isRecovering) "En recuperación" else "Adoptado",
-                        tint = if (animal.isRecovering) Color.LightGray else Color(0xFF7AB659),
+                        contentDescription = "Adoptado",
+                        tint = Color(0xFF7AB659),
                         modifier = Modifier.size(16.dp)
                     )
                 }
             }
 
-            Text(text = animal.breed, color = Color.Gray)
+            animal.raza?.let {
+                Text(text = it, color = Color.Gray)
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
+
             IconButton(onClick = onDelete) {
-                Icon(painter = painterResource(id = R.drawable.basura), contentDescription = "Delete", tint = Color.Gray)
+                Icon(
+                    painter = painterResource(id = R.drawable.basura),
+                    contentDescription = "Delete",
+                    tint = Color.Gray
+                )
             }
         }
     }

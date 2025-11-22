@@ -1,5 +1,6 @@
 package com.proyecto.huellitas_callejeras.remote
 
+import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRequest
 import com.proyecto.huellitas_callejeras.remote.dto.CitaDTO
@@ -21,7 +22,7 @@ import retrofit2.http.Path
 interface ApiService {
 
     @GET("animalitos")
-    suspend fun getAnimalitos(): List<AnimalDto>
+    suspend fun getAnimalitos(): List<Animal>
 
     @GET("animalitos/{id}")
     suspend fun getAnimalito(@Path("id") id: String): AnimalDto

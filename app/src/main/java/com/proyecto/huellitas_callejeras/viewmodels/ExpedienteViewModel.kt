@@ -3,7 +3,6 @@ package com.proyecto.huellitas_callejeras.viewmodels
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.proyecto.huellitas_callejeras.models.Animal
-import com.proyecto.huellitas_callejeras.models.PatientRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

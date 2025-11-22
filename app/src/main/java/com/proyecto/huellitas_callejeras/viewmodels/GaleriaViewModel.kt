@@ -3,7 +3,7 @@ package com.proyecto.huellitas_callejeras.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proyecto.huellitas_callejeras.models.Animal
-import com.proyecto.huellitas_callejeras.models.PatientRepository
+import com.proyecto.huellitas_callejeras.repository.AnimalRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,46 +18,65 @@ sealed class GaleriaNavTarget {
     object InicioSesion : GaleriaNavTarget()
     object CitasMedicas : GaleriaNavTarget()
     object NuevoExpediente : GaleriaNavTarget()
-    data class Expediente(val patientId: Int) : GaleriaNavTarget()
+    data class Expediente(val patientId: String) : GaleriaNavTarget()
     data class GoBackWithResult(val animal: Animal) : GaleriaNavTarget()
 }
 
 
-class GaleriaViewModel : ViewModel() {
+class GaleriaViewModel(
+    private val repository: AnimalRepository
+) : ViewModel() {
 
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
-    private val _allPatients = PatientRepository.patients
+    private val _allPatients = MutableStateFlow<List<Animal>>(emptyList())
 
-    val patients: StateFlow<List<Animal>> = searchText
-        .combine(_allPatients) { text, patients ->
-            if (text.isBlank()) {
-                patients
-            } else {
-                patients.filter {
-                    it.name.contains(text, ignoreCase = true) || it.id.toString().contains(text)
-                }
+    val patients: StateFlow<List<Animal>> =
+        searchText.combine(_allPatients) { text, patients ->
+            if (text.isBlank()) patients
+            else patients.filter {
+                it.nombre.contains(text, ignoreCase = true) ||
+                        it.idAnimal.contains(text)
             }
-        }
-        .stateIn(
+        }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            _allPatients.value
+            emptyList()
         )
 
     private val _navEvents = MutableSharedFlow<GaleriaNavTarget>()
     val navEvents = _navEvents.asSharedFlow()
 
-    fun onSearchTextChange(text: String) {
-        _searchText.value = text
+    init {
+        loadPatients()
+    }
+
+    private fun loadPatients() {
+        viewModelScope.launch {
+            try {
+                _allPatients.value = repository.getAll()
+            } catch (e: Exception) {
+                println("ERROR cargando animales: ${e.message}")
+            }
+        }
     }
 
     fun removePatient(animal: Animal) {
-        PatientRepository.removePatient(animal.id)
+        viewModelScope.launch {
+            try {
+                repository.delete(animal.idAnimal)
+                loadPatients()
+            } catch (e: Exception) {
+                println("Error eliminando: ${e.message}")
+            }
+        }
     }
 
-    // Navigation triggers
+    // ------------------------------
+    //          Navegación
+    // ------------------------------
+
     fun onHomeClicked() {
         viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
     }
@@ -67,7 +86,7 @@ class GaleriaViewModel : ViewModel() {
     }
 
     fun onBackClicked() {
-         viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
+        viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
     }
 
     fun onAddClicked() {
@@ -79,8 +98,12 @@ class GaleriaViewModel : ViewModel() {
             if (from == "citas") {
                 _navEvents.emit(GaleriaNavTarget.GoBackWithResult(animal))
             } else {
-                _navEvents.emit(GaleriaNavTarget.Expediente(animal.id))
+                _navEvents.emit(GaleriaNavTarget.Expediente(animal.idAnimal))
             }
         }
     }
+    fun onSearchTextChange(text: String) {
+        _searchText.value = text
+    }
 }
+
