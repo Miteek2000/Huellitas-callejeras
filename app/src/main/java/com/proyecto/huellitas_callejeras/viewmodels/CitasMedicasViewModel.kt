@@ -3,6 +3,7 @@ package com.proyecto.huellitas_callejeras.viewmodels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proyecto.huellitas_callejeras.models.Cita
@@ -20,33 +21,9 @@ import java.util.Locale
 import kotlin.random.Random
 
 private var allAppointments = mutableListOf(
-    Cita(
-        id = 1,
-        title = "Vacunación Puppy",
-        date = "25/07/2024",
-        place = "Veterinaria 'El Roble'",
-        realizationDate = "",
-        patientName = "Puppy",
-        patientId = 1
-    ),
-    Cita(
-        id = 2,
-        title = "Chequeo general",
-        date = "25/07/2024",
-        place = "Mi Casa",
-        realizationDate = "",
-        patientName = "Manchas",
-        patientId = 2
-    ),
-    Cita(
-        id = 3,
-        title = "Desparasitación",
-        date = "28/07/2024",
-        place = "Veterinaria 'El Roble'",
-        realizationDate = "",
-        patientName = "Luna",
-        patientId = 3
-    ),
+    Cita(id = 1, title = "Vacunación Puppy", date = "25/07/2024", place = "Veterinaria 'El Roble'", realizationDate = "", patientName = "Puppy", patientId = 1),
+    Cita(id = 2, title = "Chequeo general", date = "25/07/2024", place = "Mi Casa", realizationDate = "", patientName = "Manchas", patientId = 2),
+    Cita(id = 3, title = "Desparasitación", date = "28/07/2024", place = "Veterinaria 'El Roble'", realizationDate = "", patientName = "Luna", patientId = 3),
 )
 
 data class CitasUiState(
@@ -68,7 +45,7 @@ sealed class CitasNavTarget {
     data class GaleriaParaSeleccion(val from: String) : CitasNavTarget()
 }
 
-class CitasMedicasViewModel : ViewModel() {
+class CitasMedicasViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CitasUiState())
     val uiState = _uiState.asStateFlow()
@@ -84,6 +61,11 @@ class CitasMedicasViewModel : ViewModel() {
     init {
         onDateSelected(System.currentTimeMillis())
         updateDatesWithAppointments()
+
+        savedStateHandle.get<Patient>("patient")?.let {
+            onPatientSelected(it)
+            savedStateHandle.remove<Patient>("patient")
+        }
     }
 
     private fun updateDatesWithAppointments() {

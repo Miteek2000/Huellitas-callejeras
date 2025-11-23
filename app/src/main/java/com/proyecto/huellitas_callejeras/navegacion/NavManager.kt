@@ -1,14 +1,12 @@
 package com.proyecto.huellitas_callejeras.navegacion
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.proyecto.huellitas_callejeras.models.Patient
 import com.proyecto.huellitas_callejeras.screens.CitasMedicasScreen
 import com.proyecto.huellitas_callejeras.screens.EditarCitaScreen
 import com.proyecto.huellitas_callejeras.screens.ExpedienteScreen
@@ -53,13 +51,6 @@ fun NavManager() {
             ExpedienteScreen(navController, expedienteViewModel, patientIdOrNull, editable)
         }
         composable(AppScreens.CitasMedicasScreen.route) {
-            val patient = navController.currentBackStackEntry?.savedStateHandle?.get<Patient>("patient")
-            LaunchedEffect(patient) {
-                patient?.let {
-                    citasMedicasViewModel.onPatientSelected(it)
-                    navController.currentBackStackEntry?.savedStateHandle?.remove<Patient>("patient")
-                }
-            }
             CitasMedicasScreen(navController, citasMedicasViewModel)
         }
         composable(AppScreens.EditarCitaScreen.route) {
