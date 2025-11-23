@@ -1,6 +1,7 @@
 package com.proyecto.huellitas_callejeras.models
 
 import android.os.Parcelable
+import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
 import kotlinx.parcelize.Parcelize
 
 @Parcelize

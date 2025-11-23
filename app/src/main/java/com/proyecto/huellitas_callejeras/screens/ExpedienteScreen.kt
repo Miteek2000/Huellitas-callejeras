@@ -1,5 +1,6 @@
-package com.mayte.huellitas_callejeras.screens
+package com.proyecto.huellitas_callejeras.screens
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,12 +32,8 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,15 +44,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,28 +58,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.mayte.huellitas_callejeras.R
+import com.proyecto.huellitas_callejeras.R
+import com.proyecto.huellitas_callejeras.screens.components.FormDropDownMenu
+import com.proyecto.huellitas_callejeras.screens.components.FormTextField
 import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1
 import com.proyecto.huellitas_callejeras.viewmodels.ExpedienteViewModel
+import java.lang.SecurityException
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpedienteScreen(
     navController: NavController,
     viewModel: ExpedienteViewModel,
-    patientId: Int?,
+    patientId: String?,
     isEditable: Boolean
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
     val datePickerState = rememberDatePickerState()
+    val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
-            uri?.let { viewModel.onImageSelected(it) }
+            uri?.let {
+                try {
+                    val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    context.contentResolver.takePersistableUriPermission(it, flags)
+                } catch (e: SecurityException) {
+                    e.printStackTrace()
+                }
+                viewModel.onImageSelected(it)
+            }
         }
     )
 
@@ -265,6 +273,7 @@ fun ExpedienteScreen(
                                         enabled = uiState.isEditing,
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659)),
+                                        shape = RoundedCornerShape(28.dp),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                     ) {
                                         Box(
@@ -302,6 +311,7 @@ fun ExpedienteScreen(
                                     enabled = uiState.isEditing,
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659)),
+                                    shape = RoundedCornerShape(28.dp),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
                                     Text("Tratamiento", fontSize = 16.sp)
@@ -311,55 +321,85 @@ fun ExpedienteScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                     }
 
-                    item { FormTextField(label = "Nombre",
-                      value = uiState.nombre,
-                      onValueChange = viewModel::onNombreChange,
-                      enabled = uiState.isEditing) }
-                    item { FormDropDownMenu(label = "Especie",
-                      options = uiState.especieOptions,
-                      selectedOption = uiState.especie,
-                      onOptionSelected = viewModel::onEspecieChange,
-                      enabled = uiState.isEditing) }
-                    item { FormTextField(label = "Raza",
-                      value = uiState.raza,
-                      onValueChange = viewModel::onRazaChange,
-                      enabled = uiState.isEditing) }
-                    item { FormTextField(label = "Edad",
-                        value = uiState.edad,
-                        onValueChange = { viewModel.onEdadChange(it.filter(Char::isDigit)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        enabled = uiState.isEditing) }
-                    item { FormDropDownMenu(label = "Sexo",
-                      options = uiState.sexoOptions,
-                      selectedOption = uiState.sexo,
-                      onOptionSelected = viewModel::onSexoChange,
-                      enabled = uiState.isEditing) }
-                    item { FormTextField(label = "Peso",
-                        value = uiState.peso,
-                        onValueChange = {
-                            val newText = it.filter { char -> char.isDigit() || char == '.' }
-                            if (newText.count { char -> char == '.' } <= 1) {
-                                viewModel.onPesoChange(newText)
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        enabled = uiState.isEditing) }
                     item {
                         FormTextField(
-                            label = "Fecha de ingreso",
-                            value = uiState.fechaIngreso,
-                            onValueChange = viewModel::onFechaIngresoChange,
+                            label = "Nombre",
+                            value = uiState.nombre,
+                            onValueChange = viewModel::onNombreChange,
+                            enabled = uiState.isEditing,
+                            isError = uiState.nombreError
+                        )
+                    }
+                    item {
+                        FormDropDownMenu(
+                            label = "Especie",
+                            options = uiState.especieOptions,
+                            selectedOption = uiState.especie,
+                            onOptionSelected = viewModel::onEspecieChange,
+                            enabled = uiState.isEditing,
+                            isError = uiState.especieError
+                        )
+                    }
+                    item {
+                        FormTextField(
+                            label = "Raza",
+                            value = uiState.raza,
+                            onValueChange = viewModel::onRazaChange,
+                            enabled = uiState.isEditing,
+                            isError = uiState.razaError
+                        )
+                    }
+                    item {
+                        FormTextField(
+                            label = "Edad",
+                            value = uiState.edad,
+                            onValueChange = { viewModel.onEdadChange(it.filter(Char::isDigit)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            enabled = uiState.isEditing,
+                            isError = uiState.edadError
+                        )
+                    }
+                    item {
+                        FormDropDownMenu(
+                            label = "Sexo",
+                            options = uiState.sexoOptions,
+                            selectedOption = uiState.sexo,
+                            onOptionSelected = viewModel::onSexoChange,
+                            enabled = uiState.isEditing,
+                            isError = uiState.sexoError
+                        )
+                    }
+                    item {
+                        FormTextField(
+                            label = "Peso",
+                            value = uiState.peso,
+                            onValueChange = {
+                                val newText = it.filter { char -> char.isDigit() || char == '.' }
+                                if (newText.count { char -> char == '.' } <= 1) {
+                                    viewModel.onPesoChange(newText)
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            enabled = uiState.isEditing,
+                            isError = uiState.pesoError
+                        )
+                    }
+                    item {
+                        FormTextField(
+                            label = "Fecha de salida",
+                            value = uiState.fechaSalida ?: "",
+                            onValueChange = viewModel::onFechaSalidaChange,
                             enabled = uiState.isEditing,
                             trailingIcon = { Icon(painterResource(id = R.drawable.calender),
                                 contentDescription = "Calendar Icon",
-                                modifier = Modifier.clickable(enabled = uiState.isEditing) { viewModel.onShowDatePickerDialog("ingreso") }) }
+                                modifier = Modifier.clickable(enabled = uiState.isEditing) { viewModel.onShowDatePickerDialog("salida") }) }
                         )
                     }
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("Datos de rescate", fontSize = 18.sp,
-                          fontWeight = FontWeight.Bold,
-                          color = Color.White)
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     item {
@@ -367,7 +407,8 @@ fun ExpedienteScreen(
                             label = "Lugar de rescate",
                             value = uiState.lugarRescate,
                             onValueChange = viewModel::onLugarRescateChange,
-                            enabled = uiState.isEditing
+                            enabled = uiState.isEditing,
+                            isError = uiState.lugarRescateError
                         )
                     }
                     item {
@@ -376,18 +417,20 @@ fun ExpedienteScreen(
                             value = uiState.condicionesRescate,
                             onValueChange = viewModel::onCondicionesRescateChange,
                             enabled = uiState.isEditing,
-                            singleLine = false
+                            singleLine = false,
+                            isError = uiState.condicionesRescateError
                         )
                     }
                     item {
                         FormTextField(
-                            label = "Fecha de salida",
-                            value = uiState.fechaSalida,
-                            onValueChange = viewModel::onFechaSalidaChange,
+                            label = "Fecha de ingreso",
+                            value = uiState.fechaIngreso?: "",
+                            onValueChange = viewModel::onFechaIngresoChange,
                             enabled = uiState.isEditing,
                             trailingIcon = { Icon(painterResource(id = R.drawable.calender),
                                 contentDescription = "Calendar Icon",
-                                modifier = Modifier.clickable(enabled = uiState.isEditing) { viewModel.onShowDatePickerDialog("salida") }) }
+                                modifier = Modifier.clickable(enabled = uiState.isEditing) { viewModel.onShowDatePickerDialog("ingreso") }) },
+                            isError = uiState.fechaIngresoError
                         )
                     }
 
@@ -401,10 +444,12 @@ fun ExpedienteScreen(
                             ) {
                                 Button(
                                     onClick = {
-                                        viewModel.savePatient()
-                                        navController.navigate(AppScreens.GaleriaScreen.route)
+                                        viewModel.savePatient {
+                                            navController.navigate(AppScreens.GaleriaScreen.route)
+                                        }
                                     },
                                     modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(28.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659))
                                 ) {
                                     Text("Guardar", fontSize = 16.sp, color = Color.White)
@@ -418,107 +463,18 @@ fun ExpedienteScreen(
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(28.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
                                 ) {
                                     Text("Cancelar", fontSize = 16.sp, color = Color.White)
                                 }
+
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun FormTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean,
-    singleLine: Boolean = true,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    trailingIcon: @Composable (() -> Unit)? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth().padding(bottom = 8.dp),
-        label = { Text(label) },
-        enabled = enabled,
-        singleLine = singleLine,
-        keyboardOptions = keyboardOptions,
-        trailingIcon = trailingIcon,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            disabledContainerColor = Color.White,
-            focusedBorderColor = Color(0xFF5B2D5B),
-            unfocusedBorderColor = Color.LightGray,
-            focusedLabelColor = Color(0xFF5B2D5B),
-            unfocusedLabelColor = Color.Gray,
-            focusedTextColor = Color(0xFF5B2D5B),
-            unfocusedTextColor = Color(0xFF5B2D5B)
-        ),
-        shape = RoundedCornerShape(8.dp)
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FormDropDownMenu(
-    label: String,
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(
-        expanded = expanded, onExpandedChange = { if (enabled) expanded = !expanded },
-        modifier = modifier.fillMaxWidth().padding(bottom = 8.dp)
-    ) {
-        OutlinedTextField(
-            value = selectedOption,
-            onValueChange = {},
-            label = { Text(label) },
-            readOnly = true,
-            enabled = enabled,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White,
-                focusedBorderColor = Color(0xFF5B2D5B),
-                unfocusedBorderColor = Color.LightGray,
-                focusedLabelColor = Color(0xFF5B2D5B),
-                unfocusedLabelColor = Color.Gray,
-                focusedTextColor = Color(0xFF5B2D5B),
-                unfocusedTextColor = Color(0xFF5B2D5B)
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                )
             }
         }
     }

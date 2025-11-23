@@ -6,7 +6,8 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Cita(
     val idCitas: String,
-    val fechaRealizacion: String?,
+    val titulo: String,
+    val fechaRealizacion: String,
     val fechaCita: String,
     val motivo: String,
     val lugar: String,

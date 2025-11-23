@@ -1,4 +1,4 @@
-package com.mayte.huellitas_callejeras.screens
+package com.proyecto.huellitas_callejeras.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

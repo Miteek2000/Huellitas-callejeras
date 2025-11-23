@@ -1,4 +1,4 @@
-package com.mayte.huellitas_callejeras.screens
+package com.proyecto.huellitas_callejeras.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,20 +28,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditarCitaScreen(navController: NavController, viewModel: CitasMedicasViewModel) {
+fun EditarCitaScreen(
+    navController: NavController,
+    viewModel: CitasMedicasViewModel = viewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
-    val cita = uiState.cita
-
-    if (cita == null) {
-        // Handle error state, maybe navigate back
-        navController.popBackStack()
-        return
-    }
+    val cita = uiState.cita ?: return run { navController.popBackStack(); false }
 
     Column(
         modifier = Modifier
@@ -49,8 +47,7 @@ fun EditarCitaScreen(navController: NavController, viewModel: CitasMedicasViewMo
             .background(Color.White)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { navController.popBackStack() }) {
@@ -62,35 +59,62 @@ fun EditarCitaScreen(navController: NavController, viewModel: CitasMedicasViewMo
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .background(color = Color(0xFFF7D0E2), shape = RoundedCornerShape(16.dp))
+                .background(Color(0xFFF7D0E2), RoundedCornerShape(16.dp))
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CitaTextField(label = "Título", value = cita.title, onValueChange = { viewModel.onCitaChange(cita.copy(title = it)) })
-            CitaTextField(label = "Fecha Cita", value = cita.date, onValueChange = { viewModel.onCitaChange(cita.copy(date = it)) })
-            CitaTextField(label = "Lugar", value = cita.place, onValueChange = { viewModel.onCitaChange(cita.copy(place = it)) })
-            CitaTextField(label = "Motivo", value = cita.motive ?: "", onValueChange = { viewModel.onCitaChange(cita.copy(motive = it)) })
+            // CORREGIDO: Pasar onValueChange correctamente
+            CitaTextField(
+                label = "Título",
+                value = cita.titulo,
+                onValueChange = { newValue ->
+                    viewModel.updateEditingCita { it.copy(titulo = newValue) }
+                }
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            CitaTextField(
+                label = "Fecha cita",
+                value = cita.fechaCita,
+                onValueChange = { newValue ->
+                    viewModel.updateEditingCita { it.copy(fechaCita = newValue) }
+                }
+            )
+
+            CitaTextField(
+                label = "Lugar",
+                value = cita.lugar,
+                onValueChange = { newValue ->
+                    viewModel.updateEditingCita { it.copy(lugar = newValue) }
+                }
+            )
+
+            CitaTextField(
+                label = "Motivo",
+                value = cita.motivo,
+                onValueChange = { newValue ->
+                    viewModel.updateEditingCita { it.copy(motivo = newValue) }
+                }
+            )
+
+            Spacer(Modifier.height(16.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 Button(
                     onClick = { navController.popBackStack() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(8.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
                 ) {
                     Text("Cancelar", color = Color.Black)
                 }
+
                 Button(
                     onClick = {
                         viewModel.saveCita()
                         navController.popBackStack()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659)),
-                    shape = RoundedCornerShape(8.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659))
                 ) {
                     Text("Guardar", color = Color.White)
                 }
@@ -99,13 +123,12 @@ fun EditarCitaScreen(navController: NavController, viewModel: CitasMedicasViewMo
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitaTextField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit,
+    onValueChange: (String) -> Unit, // Este parámetro es obligatorio
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -113,7 +136,7 @@ fun CitaTextField(
         Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = onValueChange, // Se pasa aquí
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             colors = OutlinedTextFieldDefaults.colors(

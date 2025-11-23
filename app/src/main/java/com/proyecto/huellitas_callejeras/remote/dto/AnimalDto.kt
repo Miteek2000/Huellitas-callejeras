@@ -1,16 +1,16 @@
 package com.proyecto.huellitas_callejeras.remote.dto
 
 data class AnimalDto(
-    val id_animalito: String,
+    val id: String,
     val peso: Double,
     val raza: String?,
     val sexo: String,
-    val fecha_salida: String?,
+    val fechaSalida: String?,
     val estado: String,
     val nombre: String,
     val edad: Int,
     val especie: String,
-    val urlImagen: String
+    val urlImage: String
 )
 
 data class AnimalRequest(
@@ -21,5 +21,24 @@ data class AnimalRequest(
     val nombre: String,
     val edad: Int,
     val especie: String,
-    val urlImagen: String
+    val urlImage: String
 )
+
+data class AnimalRescateRequest(
+    val animal: AnimalRequest,
+    val rescate: RescateRequest
+)
+
+data class AnimalRescateResponse(
+    val animal: AnimalDto,
+    val rescate: RescateDTO
+)
+
+data class RescateRequest(
+    val fechaIngreso: String,
+    val lugar: String,
+    val descripcion: String
+
+)
+
+

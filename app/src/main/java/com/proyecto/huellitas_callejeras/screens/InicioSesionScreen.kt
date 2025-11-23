@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.mayte.huellitas_callejeras.R
+import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1

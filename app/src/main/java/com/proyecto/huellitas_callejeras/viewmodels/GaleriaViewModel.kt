@@ -2,6 +2,8 @@ package com.proyecto.huellitas_callejeras.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.disk.DiskCache
+import com.proyecto.huellitas_callejeras.data.DependencyProvider
 import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.repository.AnimalRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,19 +16,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+
 sealed class GaleriaNavTarget {
     object InicioSesion : GaleriaNavTarget()
     object CitasMedicas : GaleriaNavTarget()
     object NuevoExpediente : GaleriaNavTarget()
-    data class Expediente(val patientId: String) : GaleriaNavTarget()
+    data class Expediente(val patientId: String, val editable: Boolean) : GaleriaNavTarget()
     data class GoBackWithResult(val animal: Animal) : GaleriaNavTarget()
 }
 
-
-class GaleriaViewModel(
-    private val repository: AnimalRepository
-) : ViewModel() {
-
+class GaleriaViewModel : ViewModel() {
+    private val repository = DependencyProvider.animalRepository
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
@@ -73,10 +73,7 @@ class GaleriaViewModel(
         }
     }
 
-    // ------------------------------
-    //          Navegación
-    // ------------------------------
-
+    // Navegación
     fun onHomeClicked() {
         viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
     }
@@ -98,12 +95,13 @@ class GaleriaViewModel(
             if (from == "citas") {
                 _navEvents.emit(GaleriaNavTarget.GoBackWithResult(animal))
             } else {
-                _navEvents.emit(GaleriaNavTarget.Expediente(animal.idAnimal))
+                val id = animal.idAnimal ?: return@launch
+                _navEvents.emit(GaleriaNavTarget.Expediente(id, false))
             }
         }
     }
+
     fun onSearchTextChange(text: String) {
         _searchText.value = text
     }
 }
-

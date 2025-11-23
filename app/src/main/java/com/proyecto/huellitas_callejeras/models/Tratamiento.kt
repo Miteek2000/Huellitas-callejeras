@@ -10,3 +10,4 @@ data class Tratamiento(
     val receta: String,
     val medicamentos: List<TratamientoMedicamento>? = null
 ) : Parcelable
+

@@ -11,3 +11,4 @@ data class Rescate(
     val descripcion: String,
     val animalitoId: String
 ) : Parcelable
+

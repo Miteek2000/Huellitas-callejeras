@@ -3,6 +3,9 @@ package com.proyecto.huellitas_callejeras.remote
 import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRequest
+import com.proyecto.huellitas_callejeras.remote.dto.AnimalRescateRequest
+import com.proyecto.huellitas_callejeras.remote.dto.AnimalRescateResponse
+import com.proyecto.huellitas_callejeras.remote.dto.ApiResponse
 import com.proyecto.huellitas_callejeras.remote.dto.CitaDTO
 import com.proyecto.huellitas_callejeras.remote.dto.CitaRequest
 import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoDTO
@@ -22,7 +25,7 @@ import retrofit2.http.Path
 interface ApiService {
 
     @GET("animalitos")
-    suspend fun getAnimalitos(): List<Animal>
+    suspend fun getAnimalitos(): ApiResponse<List<AnimalDto>>
 
     @GET("animalitos/{id}")
     suspend fun getAnimalito(@Path("id") id: String): AnimalDto
@@ -36,12 +39,28 @@ interface ApiService {
     @DELETE("animalitos/{id}")
     suspend fun deleteAnimalito(@Path("id") id: String)
 
+    @POST("animalitos/crear-con-rescate")
+    suspend fun createAnimalitoConRescate(@Body body: AnimalRescateRequest): ApiResponse<AnimalRescateResponse>
 
+    @PUT("animalitos/{id}/actualizar-con-rescate")
+    suspend fun updateAnimalitoConRescate(
+        @Path("id") id: String,
+        @Body body: AnimalRescateRequest
+    ): ApiResponse<AnimalRescateResponse>
+
+    @GET("animalitos/{id}/con-rescate")
+    suspend fun getAnimalitoConRescate(@Path("id") id: String): ApiResponse<AnimalRescateResponse>
     @GET("citas")
     suspend fun getCitas(): List<CitaDTO>
 
+    @GET("citas/{id}")
+    suspend fun getCita(@Path("id") id: String): CitaDTO
+
     @POST("citas")
     suspend fun createCita(@Body body: CitaRequest): CitaDTO
+
+    @PUT("citas/{id}")
+    suspend fun updateCita(@Path("id") id: String, @Body body: CitaRequest)
 
     @DELETE("citas/{id}")
     suspend fun deleteCita(@Path("id") id: String)
