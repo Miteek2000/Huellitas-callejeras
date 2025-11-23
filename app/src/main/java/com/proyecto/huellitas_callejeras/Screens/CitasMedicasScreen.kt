@@ -108,15 +108,15 @@ fun CitasMedicasScreen(navController: NavController, viewModel: CitasMedicasView
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color.White)
+              .fillMaxSize()
+              .padding(paddingValues)
+              .background(Color.White)
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFE8C6D4))
-                    .padding(vertical = 8.dp),
+                  .fillMaxWidth()
+                  .background(Color(0xFFE8C6D4))
+                  .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Citas Médicas", fontSize = 20.sp, color = Color(0xFF5B2D5B), fontWeight = FontWeight.Bold)
@@ -132,8 +132,8 @@ fun CitasMedicasScreen(navController: NavController, viewModel: CitasMedicasView
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                  .fillMaxWidth()
+                  .padding(horizontal = 16.dp)
             ) {
                 items(uiState.appointmentsForSelectedDate) { cita ->
                     AppointmentCard(
@@ -163,8 +163,8 @@ fun AppointmentCard(
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF7D0E2))
     ) {
         ConstraintLayout(modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()) {
+          .padding(16.dp)
+          .fillMaxWidth()) {
             val (title, edit, delete, date, place, realization, patientInfo) = createRefs()
 
             Text(cita.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.constrainAs(title) {

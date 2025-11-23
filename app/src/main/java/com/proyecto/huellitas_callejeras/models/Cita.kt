@@ -3,6 +3,7 @@ package com.proyecto.huellitas_callejeras.models
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
+
 @Parcelize
 data class Cita(
     val id: Int,

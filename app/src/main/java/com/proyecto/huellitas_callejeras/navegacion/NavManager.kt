@@ -15,6 +15,7 @@ import com.proyecto.huellitas_callejeras.screens.InicioSesionScreen
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 import com.proyecto.huellitas_callejeras.viewmodels.ExpedienteViewModel
 
+
 @Composable
 fun NavManager() {
     val navController = rememberNavController()

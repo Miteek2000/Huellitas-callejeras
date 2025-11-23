@@ -28,6 +28,7 @@ import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1
 
+
 @Composable
 fun InicioSesionScreen(navController: NavController) {
     Box(

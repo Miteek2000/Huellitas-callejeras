@@ -207,7 +207,6 @@ class CitasMedicasViewModel(private val savedStateHandle: SavedStateHandle) : Vi
         }
     }
 
-    // Navigation triggers
     fun onHomeClicked() {
         viewModelScope.launch { _navEvents.emit(CitasNavTarget.Galeria) }
     }

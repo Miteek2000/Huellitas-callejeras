@@ -160,6 +160,7 @@ fun GaleriaScreen(navController: NavController, galeriaViewModel: GaleriaViewMod
                 )
             }
 
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

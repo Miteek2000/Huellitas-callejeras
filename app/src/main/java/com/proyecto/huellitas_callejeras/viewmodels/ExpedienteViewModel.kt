@@ -174,6 +174,7 @@ class ExpedienteViewModel : ViewModel() {
     }
 }
 
+
 data class ExpedienteUiState(
     val id: Int? = null,
     val nombre: String = "",

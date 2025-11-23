@@ -67,6 +67,7 @@ import com.proyecto.huellitas_callejeras.ui.theme.purple1
 import com.proyecto.huellitas_callejeras.viewmodels.ExpedienteViewModel
 import java.lang.SecurityException
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpedienteScreen(

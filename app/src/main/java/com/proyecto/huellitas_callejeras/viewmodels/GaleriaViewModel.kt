@@ -87,7 +87,6 @@ class GaleriaViewModel : ViewModel() {
         }
     }
 
-
     var showDeleteConfirmationDialog by mutableStateOf(false)
       private set
 

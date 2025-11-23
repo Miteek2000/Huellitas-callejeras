@@ -34,7 +34,6 @@ fun EditarCitaScreen(navController: NavController, viewModel: CitasMedicasViewMo
     val cita = uiState.cita
 
     if (cita == null) {
-        // Handle error state, maybe navigate back
         navController.popBackStack()
         return
     }
