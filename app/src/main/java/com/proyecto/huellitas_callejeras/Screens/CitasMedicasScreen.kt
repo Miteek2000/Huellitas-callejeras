@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.screens
+package com.mayte.huellitas_callejeras.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,26 +43,18 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.proyecto.huellitas_callejeras.R
-import com.proyecto.huellitas_callejeras.components.DeleteCitaConfirmationDialog
-import com.proyecto.huellitas_callejeras.models.Cita
-import com.proyecto.huellitas_callejeras.models.Patient
-import com.proyecto.huellitas_callejeras.navegacion.AppScreens
-import com.proyecto.huellitas_callejeras.ui.theme.Calendar
-import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
-import com.proyecto.huellitas_callejeras.viewmodels.CitasNavTarget
+import com.mayte.huellitas_callejeras.R
+import com.mayte.huellitas_callejeras.models.Cita
+import com.mayte.huellitas_callejeras.models.Patient
+import com.mayte.huellitas_callejeras.navegacion.AppScreens
+import com.mayte.huellitas_callejeras.ui.theme.Calendar
+import com.mayte.huellitas_callejeras.viewmodels.CitasMedicasViewModel
+import com.mayte.huellitas_callejeras.viewmodels.CitasNavTarget
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasMedicasScreen(navController: NavController, viewModel: CitasMedicasViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
-
-    if (viewModel.showDeleteConfirmationDialog) {
-        DeleteCitaConfirmationDialog(
-            onConfirm = viewModel::onDeleteCitaConfirmed,
-            onDismiss = viewModel::onDeletionCancelled
-        )
-    }
 
     val patient = navController.currentBackStackEntry?.savedStateHandle?.get<Patient>("patient")
 
@@ -110,8 +102,7 @@ fun CitasMedicasScreen(navController: NavController, viewModel: CitasMedicasView
             FloatingActionButton(
                 onClick = viewModel::onAddNewCitaClicked,
                 containerColor = Color(0xFF5B2D5B),
-                contentColor = Color.White,
-                shape = RoundedCornerShape(28.dp)
+                contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Cita")
             }
@@ -150,7 +141,7 @@ fun CitasMedicasScreen(navController: NavController, viewModel: CitasMedicasView
                     AppointmentCard(
                         cita = cita,
                         onEditClick = { viewModel.onEditCitaClicked(cita) },
-                        onDeleteClick = { viewModel.onDeleteCitaRequested(cita) },
+                        onDeleteClick = { viewModel.deleteCita(cita) },
                         onPatientIconClick = { viewModel.onPatientIconClicked(cita) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))

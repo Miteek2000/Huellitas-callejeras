@@ -20,9 +20,33 @@ import java.util.Locale
 import kotlin.random.Random
 
 private var allAppointments = mutableListOf(
-    Cita(id = 1, title = "Vacunación Puppy", date = "25/07/2024", place = "Veterinaria 'El Roble'", realizationDate = "", patientName = "Puppy", patientId = 1),
-    Cita(id = 2, title = "Chequeo general", date = "25/07/2024", place = "Mi Casa", realizationDate = "", patientName = "Manchas", patientId = 2),
-    Cita(id = 3, title = "Desparasitación", date = "28/07/2024", place = "Veterinaria 'El Roble'", realizationDate = "", patientName = "Luna", patientId = 3),
+    Cita(
+        id = 1,
+        title = "Vacunación Puppy",
+        date = "25/07/2024",
+        place = "Veterinaria 'El Roble'",
+        realizationDate = "",
+        patientName = "Puppy",
+        patientId = 1
+    ),
+    Cita(
+        id = 2,
+        title = "Chequeo general",
+        date = "25/07/2024",
+        place = "Mi Casa",
+        realizationDate = "",
+        patientName = "Manchas",
+        patientId = 2
+    ),
+    Cita(
+        id = 3,
+        title = "Desparasitación",
+        date = "28/07/2024",
+        place = "Veterinaria 'El Roble'",
+        realizationDate = "",
+        patientName = "Luna",
+        patientId = 3
+    ),
 )
 
 data class CitasUiState(
