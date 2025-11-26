@@ -208,7 +208,6 @@ class ExpedienteViewModel : ViewModel() {
         }
     }
 
-    // ... (todos los demás métodos se mantienen igual)
     fun onNombreChange(nombre: String) {
         _uiState.update { it.copy(nombre = nombre) }
     }
@@ -269,7 +268,6 @@ class ExpedienteViewModel : ViewModel() {
         _uiState.update { it.copy(showDatePickerDialogFor = forField) }
     }
 
-    // En onDateSelected, modifica para incluir la hora:
     fun onDateSelected(dateMillis: Long?) {
         val dateString = if (dateMillis != null) {
             val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
@@ -305,10 +303,9 @@ class ExpedienteViewModel : ViewModel() {
                 pesoError || fechaIngresoError || lugarRescateError || condicionesRescateError
 
         if (!hasError) {
-            // En lugar de crear un Patient, llamamos al método que ya tienes para la API
             saveAnimalConRescate(onSuccess)
 
-            // Actualizar estado de errores
+
             _uiState.update { it.copy(
                 nombreError = false,
                 especieError = false,
@@ -335,7 +332,6 @@ class ExpedienteViewModel : ViewModel() {
 
 }
 
-// Data class se mantiene igual
 data class ExpedienteUiState(
     val loading: Boolean = false,
     val error: String? = null,

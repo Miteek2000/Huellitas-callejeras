@@ -51,19 +51,22 @@ interface ApiService {
     @GET("animalitos/{id}/con-rescate")
     suspend fun getAnimalitoConRescate(@Path("id") id: String): ApiResponse<AnimalRescateResponse>
     @GET("citas")
-    suspend fun getCitas(): List<CitaDTO>
+    suspend fun getCitas(): ApiResponse<List<CitaDTO>>
+
 
     @GET("citas/{id}")
-    suspend fun getCita(@Path("id") id: String): CitaDTO
+    suspend fun getCita(@Path("id") id: String): ApiResponse<CitaDTO>
 
     @POST("citas")
-    suspend fun createCita(@Body body: CitaRequest): CitaDTO
+    suspend fun createCita(@Body body: CitaRequest): ApiResponse<CitaDTO>
 
     @PUT("citas/{id}")
-    suspend fun updateCita(@Path("id") id: String, @Body body: CitaRequest)
+    suspend fun updateCita(@Path("id") id: String, @Body body: CitaRequest) : ApiResponse<Unit?>
+
 
     @DELETE("citas/{id}")
-    suspend fun deleteCita(@Path("id") id: String)
+    suspend fun deleteCita(@Path("id") id: String) : ApiResponse<Unit?>
+
 
 
     @GET("medicamentos")

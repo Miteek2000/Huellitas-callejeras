@@ -68,7 +68,6 @@ fun GaleriaScreen(
     val patients by galeriaViewModel.patients.collectAsState()
     val searchText by galeriaViewModel.searchText.collectAsState()
 
-    // Navegación con eventos del ViewModel
     LaunchedEffect(Unit) {
         galeriaViewModel.navEvents.collect { target ->
             when (target) {
@@ -175,7 +174,6 @@ fun GaleriaScreen(
                 )
             }
 
-            // --- Buscar ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -61,7 +61,6 @@ fun GreetingPreview() {
     }
 }
 
-// TestConnectionScreen.kt
 @Composable
 fun ConnectionTestView() {
     var message by remember { mutableStateOf("Presiona para probar conexión") }

@@ -73,7 +73,6 @@ class GaleriaViewModel : ViewModel() {
         }
     }
 
-    // Navegación
     fun onHomeClicked() {
         viewModelScope.launch { _navEvents.emit(GaleriaNavTarget.InicioSesion) }
     }

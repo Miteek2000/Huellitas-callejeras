@@ -16,7 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-
+import java.text.SimpleDateFormat
+import java.util.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,17 +54,16 @@ import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.Calendar
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 import androidx.compose.material.icons.filled.Add
-
+import androidx.compose.material3.Button
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasMedicasScreen(
     navController: NavController,
     viewModel: CitasMedicasViewModel = viewModel()
 ) {
-
-    val citas = viewModel.citas
-    val loading = viewModel.loading
-    val error = viewModel.errorMessage
+    val uiState by viewModel.uiState.collectAsState()
+    val calendar by viewModel.calendar.collectAsState()
+    val selectedDate by viewModel.selectedDate.collectAsState()
 
     Scaffold(
         topBar = {
@@ -78,7 +78,7 @@ fun CitasMedicasScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // Aquí puedes navegar a crear nueva cita si es necesario
+                    viewModel.setEditingCita(viewModel.nuevaCitaVacia())
                     navController.navigate(AppScreens.EditarCitaScreen.route)
                 },
                 containerColor = Color(0xFF5B2D5B),
@@ -88,57 +88,118 @@ fun CitasMedicasScreen(
             }
         }
     ) { paddingValues ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(Color.White)
         ) {
-
-            if (loading) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-                return@Column
-            }
-
-            error?.let {
+            // Header de Citas Médicas
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFE8C6D4))
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = it,
-                    color = Color.Red,
-                    modifier = Modifier.padding(16.dp)
+                    "Citas Médicas",
+                    fontSize = 20.sp,
+                    color = Color(0xFF5B2D5B),
+                    fontWeight = FontWeight.Bold
                 )
             }
 
+            // Tu componente Calendar existente - CORREGIDO
+            Calendar(
+                calendar = calendar,
+                onDateSelected = viewModel::onDateSelected,
+                onMonthChanged = viewModel::onMonthChanged,
+                onYearChanged = viewModel::onYearChanged,
+                datesWithAppointments = viewModel.datesWithAppointments
+            )
+
+            // Mostrar la fecha seleccionada
+            val selectedDateFormatted = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                .format(Date(selectedDate))
+
+            Text(
+                text = "Citas para: $selectedDateFormatted",
+                modifier = Modifier.padding(16.dp),
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF5B2D5B),
+                fontSize = 16.sp
+            )
+
+            // Lista de citas para la fecha seleccionada
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .weight(1f)
                     .padding(horizontal = 16.dp)
             ) {
-                items(citas) { cita ->
+                val citasDelDia = viewModel.appointmentsForSelectedDate
 
-                    AppointmentCard(
-                        cita = cita,
-                        onEditClick = {
-                            navController.navigate(
-                                AppScreens.EditarCitaScreen.route + "?id=${cita.idCitas}"
+                if (citasDelDia.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "No hay citas para esta fecha",
+                                color = Color.Gray,
+                                fontSize = 16.sp
                             )
-                        },
-                        onDeleteClick = {
-                            viewModel.eliminarCita(cita.idCitas)
-                        },
-                        onPatientIconClick = {
-                            // NUEVO: Navegar al expediente cuando se hace click en el icono del animal
-                            val animalId = viewModel.onPatientIconClicked(cita)
-                            animalId?.let { id ->
-                                navController.navigate(
-                                    AppScreens.ExpedienteScreen.route + "?patientId=$id&editable=false"
-                                )
-                            }
                         }
-                    )
+                    }
+                } else {
+                    items(citasDelDia) { cita ->
+                        AppointmentCard(
+                            cita = cita,
+                            onEditClick = {
+                                viewModel.setEditingCita(cita)
+                                navController.navigate(
+                                    AppScreens.EditarCitaScreen.route + "?id=${cita.idCitas}"
+                                )
+                            },
+                            onDeleteClick = {
+                                viewModel.eliminarCita(cita.idCitas)
+                            },
+                            onPatientIconClick = {
+                                val animalId = viewModel.onPatientIconClicked(cita)
+                                animalId?.let { id ->
+                                    navController.navigate(
+                                        AppScreens.ExpedienteScreen.route + "?patientId=$id&editable=false"
+                                    )
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
 
-                    Spacer(Modifier.height(8.dp))
+            // Mostrar errores
+            uiState.error?.let { error ->
+                if (error.isNotEmpty()) {
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
+            // Mostrar loading
+            if (uiState.loading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF5B2D5B))
                 }
             }
         }
@@ -166,7 +227,6 @@ fun AppointmentCard(
         ) {
             val (title, edit, delete, date, place, realization, patientInfo) = createRefs()
 
-            // Título
             Text(
                 cita.titulo,
                 fontSize = 18.sp,
@@ -179,7 +239,6 @@ fun AppointmentCard(
                 }
             )
 
-            // Botón Editar
             IconButton(
                 onClick = onEditClick,
                 modifier = Modifier.constrainAs(edit) {
@@ -194,7 +253,6 @@ fun AppointmentCard(
                 )
             }
 
-            // Botón Eliminar
             IconButton(
                 onClick = onDeleteClick,
                 modifier = Modifier.constrainAs(delete) {
@@ -209,7 +267,6 @@ fun AppointmentCard(
                 )
             }
 
-            // Fecha de Cita
             Text(
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -223,7 +280,6 @@ fun AppointmentCard(
                 }
             )
 
-            // Lugar
             Text(
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -237,7 +293,6 @@ fun AppointmentCard(
                 }
             )
 
-            // Fecha de Realización (si existe)
             if (cita.fechaRealizacion.isNotEmpty()) {
                 Text(
                     buildAnnotatedString {
@@ -253,7 +308,6 @@ fun AppointmentCard(
                 )
             }
 
-            // Información del Paciente
             Column(
                 modifier = Modifier.constrainAs(patientInfo) {
                     bottom.linkTo(parent.bottom)
@@ -262,15 +316,15 @@ fun AppointmentCard(
                 },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Mostrar nombre del animal si está disponible, sino mostrar ID
+
                 if (cita.animalitoId.isNotEmpty()) {
                     Text(
-                        text = "Paciente", // O puedes mostrar el nombre si lo tienes
+                        text = "Paciente",
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
-                // Icono del paciente - HACER CLICKABLE
+
                 Icon(
                     painter = painterResource(id = R.drawable.dog),
                     contentDescription = "Ver expediente del paciente",

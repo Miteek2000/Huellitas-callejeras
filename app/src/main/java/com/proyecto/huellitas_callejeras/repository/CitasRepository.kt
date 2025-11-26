@@ -4,6 +4,8 @@ import com.proyecto.huellitas_callejeras.models.Cita
 import com.proyecto.huellitas_callejeras.remote.ApiService
 import com.proyecto.huellitas_callejeras.remote.dto.CitaDTO
 import com.proyecto.huellitas_callejeras.remote.dto.CitaRequest
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 interface CitasRepository {
@@ -12,58 +14,79 @@ interface CitasRepository {
     suspend fun createCita(cita: Cita): Cita
     suspend fun updateCita(cita: Cita)
     suspend fun deleteCita(id: String)
-}
-
-class CitasRepositoryImpl(
+}class CitasRepositoryImpl(
     private val api: ApiService
 ) : CitasRepository {
 
-    private fun dtoToDomain(dto: CitaDTO): Cita {
+    private fun dtoToDomain(dto: CitaDTO?): Cita {
         return Cita(
-            idCitas = dto.id_citas.toString(),
-            titulo = dto.titulo,
-            fechaRealizacion = dto.fecha_realizacion,
-            fechaCita = dto.fecha_cita,
-            motivo = dto.motivo,
-            lugar = dto.lugar,
-            animalitoId = dto.animalito_id?.toString() ?: ""
+            idCitas = dto?.id_citas.toString(),
+            titulo = dto?.titulo ?: "sin titulo",
+            fechaRealizacion = dto?.fechaRealizacion ?: LocalDateTime.now().format(
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            fechaCita = dto?.fechaCita ?: LocalDateTime.now().format(
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            motivo = dto?.motivo ?: "sin motivo",
+            lugar = dto?.lugar ?: "sin lugar",
+            animalitoId = dto?.animalitoId?.toString() ?: ""
         )
     }
 
     private fun domainToRequest(cita: Cita): CitaRequest {
         return CitaRequest(
             titulo = cita.titulo,
-            fecha_cita = cita.fechaCita,
+            fechaCita = cita.fechaCita,
             motivo = cita.motivo,
             lugar = cita.lugar,
-            url_imagen = "",
-            animalito_id = if (cita.animalitoId.isNotBlank()) UUID.fromString(cita.animalitoId) else null
+            fechaRealizacion = cita.fechaRealizacion,
+            animalitoId = try {
+                if (cita.animalitoId.isNotBlank()) UUID.fromString(cita.animalitoId) else null
+            } catch (e: Exception) {
+                null
+            }
         )
     }
 
     override suspend fun getCitas(): List<Cita> {
-        val dtos = api.getCitas()
-        return dtos.map { dtoToDomain(it) }
+        val response = api.getCitas()
+        if (response.success) {
+            return response.data?.map { dtoToDomain(it) } ?: emptyList()
+        } else {
+            throw Exception(response.message ?: "Error al obtener citas")
+        }
     }
 
     override suspend fun getCita(id: String): Cita {
-        val dto = api.getCita(id)
-        return dtoToDomain(dto)
+        val response = api.getCita(id)
+        if (response.success) {
+            return dtoToDomain(response.data)
+        } else {
+            throw Exception(response.message ?: "Error al obtener la cita")
+        }
     }
 
     override suspend fun createCita(cita: Cita): Cita {
         val body = domainToRequest(cita)
-        val dto = api.createCita(body)
-        return dtoToDomain(dto)
+        val response = api.createCita(body)
+        if (response.success) {
+            return dtoToDomain(response.data)
+        } else {
+            throw Exception(response.message ?: "Error al crear la cita")
+        }
     }
 
     override suspend fun updateCita(cita: Cita) {
         val body = domainToRequest(cita)
-        // la API espera el id en path
-        api.updateCita(cita.idCitas, body)
+        val response = api.updateCita(cita.idCitas, body)
+        if (!response.success) {
+            throw Exception(response.message ?: "Error al actualizar la cita")
+        }
     }
 
     override suspend fun deleteCita(id: String) {
-        api.deleteCita(id)
+        val response = api.deleteCita(id)
+        if (!response.success) {
+            throw Exception(response.message ?: "Error al eliminar la cita")
+        }
     }
 }
