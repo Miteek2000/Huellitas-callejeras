@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.navegacion.AppScreens
@@ -243,11 +244,13 @@ fun PatientCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Image(
-                painter = painterResource(id = R.drawable.ejemploexpediente),
+            AsyncImage(
+                model = animal.urlImagen,
                 contentDescription = animal.nombre,
                 modifier = Modifier.size(126.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.ejemploexpediente),
+                error = painterResource(id = R.drawable.ejemploexpediente)
             )
 
             Spacer(modifier = Modifier.height(8.dp))

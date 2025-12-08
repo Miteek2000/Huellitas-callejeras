@@ -2,7 +2,6 @@ package com.proyecto.huellitas_callejeras.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil.disk.DiskCache
 import com.proyecto.huellitas_callejeras.data.DependencyProvider
 import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.repository.AnimalRepository
@@ -15,7 +14,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
 
 sealed class GaleriaNavTarget {
     object InicioSesion : GaleriaNavTarget()
@@ -55,9 +53,19 @@ class GaleriaViewModel : ViewModel() {
     private fun loadPatients() {
         viewModelScope.launch {
             try {
-                _allPatients.value = repository.getAll()
+                val animals = repository.getAll()
+
+                _allPatients.value = animals.map { animal ->
+                    val imageUrl = when {
+                        animal.urlImagen?.startsWith("http") == true -> animal.urlImagen
+                        !animal.urlImagen.isNullOrBlank() -> "http://34.195.100.95:8080${animal.urlImagen}"
+                        else -> null
+                    }
+
+                    animal.copy(urlImagen = imageUrl)
+                }
             } catch (e: Exception) {
-                println("ERROR cargando animales: ${e.message}")
+                _allPatients.value = emptyList()
             }
         }
     }
@@ -68,7 +76,7 @@ class GaleriaViewModel : ViewModel() {
                 repository.delete(animal.idAnimal)
                 loadPatients()
             } catch (e: Exception) {
-                println("Error eliminando: ${e.message}")
+                // Error handled silently
             }
         }
     }

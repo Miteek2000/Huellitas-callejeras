@@ -3,8 +3,7 @@ package com.proyecto.huellitas_callejeras.viewmodels
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.proyecto.huellitas_callejeras.models.Animal
-import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
+import com.proyecto.huellitas_callejeras.data.DependencyProvider
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRequest
 import com.proyecto.huellitas_callejeras.remote.dto.RescateRequest
 import com.proyecto.huellitas_callejeras.repository.AnimalRepository
@@ -16,10 +15,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import com.proyecto.huellitas_callejeras.data.DependencyProvider
-
-
-
 
 class ExpedienteViewModel : ViewModel() {
     private val repository: AnimalRepository = DependencyProvider.animalRepository
@@ -27,10 +22,7 @@ class ExpedienteViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     fun init(patientId: String?, editable: Boolean) {
-        println("DEBUG -> init llamado con patientId: $patientId, editable: $editable")
-
         if (patientId == null) {
-            println("DEBUG -> patientId es null, modo creación")
             _uiState.update { it.copy(isEditing = editable) }
             return
         }
@@ -39,86 +31,60 @@ class ExpedienteViewModel : ViewModel() {
             _uiState.update { it.copy(loading = true, error = null) }
 
             try {
-                println("DEBUG -> Llamando a repository.getAnimalitoConRescate($patientId)")
                 val response = repository.getAnimalitoConRescate(patientId)
-
-                println("DEBUG -> Response recibida: success=${response.success}")
-                println("DEBUG -> Response data: ${response.data}")
-                println("DEBUG -> Response message: ${response.message}")
 
                 if (response.success && response.data != null) {
                     val animalito = response.data.animal
                     val rescate = response.data.rescate
 
-                    println("DEBUG -> Animalito: $animalito")
-                    println("DEBUG -> Rescate: $rescate")
-
-                    // Verificar que los datos no sean null
                     if (animalito == null) {
-                        println("DEBUG -> ERROR: animalito es null")
                         _uiState.update { it.copy(loading = false, error = "Animalito no encontrado") }
                         return@launch
                     }
 
                     if (rescate == null) {
-                        println("DEBUG -> ERROR: rescate es null")
                         _uiState.update { it.copy(loading = false, error = "Datos de rescate no encontrados") }
                         return@launch
                     }
 
-                    println("DEBUG -> Cargando datos en UI State:")
-                    println("  - ID: ${animalito.id}")
-                    println("  - Nombre: ${animalito.nombre}")
-                    println("  - Especie: ${animalito.especie}")
-                    println("  - Raza: ${animalito.raza}")
-                    println("  - Edad: ${animalito.edad}")
-                    println("  - Sexo: ${animalito.sexo}")
-                    println("  - Peso: ${animalito.peso}")
-                    println("  - Estado: ${animalito.estado}")
-                    println("  - URL Imagen: ${animalito.urlImage}")
-                    println("  - Lugar Rescate: ${rescate.lugar}")
-                    println("  - Condiciones: ${rescate.descripcion}")
-                    println("  - Fecha Ingreso: ${rescate.fechaIngreso}")
+                    val urlImagen: String = when {
+                        animalito.urlImage?.startsWith("http") == true -> animalito.urlImage!!
+                        animalito.urlImage?.startsWith("/") == true -> "http://34.195.100.95:8080${animalito.urlImage}"
+                        else -> ""
+                    }
 
                     _uiState.update {
                         it.copy(
                             loading = false,
                             id = animalito.id,
                             nombre = animalito.nombre,
-                            especie = animalito.especie,
+                            especie = animalito.especie ?: "",
                             raza = animalito.raza ?: "",
-                            edad = animalito.edad.toString(),
-                            sexo = animalito.sexo,
-                            peso = animalito.peso.toString(),
+                            edad = animalito.edad?.toString() ?: "",
+                            sexo = animalito.sexo ?: "",
+                            peso = animalito.peso?.toString() ?: "",
                             fechaSalida = animalito.fechaSalida ?: "",
-                            estadoSelected = animalito.estado,
-                            urlImagen = animalito.urlImage,
-                            selectedImageUri = if (animalito.urlImage.isNotEmpty() && animalito.urlImage != "null") {
+                            estadoSelected = animalito.estado ?: "En adopción",
+                            urlImagen = urlImagen,
+                            selectedImageUri = if (urlImagen.isNotBlank()) {
                                 try {
-                                    Uri.parse(animalito.urlImage)
+                                    Uri.parse(urlImagen)
                                 } catch (e: Exception) {
-                                    println("DEBUG -> Error parseando URI: ${e.message}")
                                     null
                                 }
                             } else null,
                             lugarRescate = rescate.lugar,
                             condicionesRescate = rescate.descripcion,
                             fechaIngreso = rescate.fechaIngreso,
+                            rescatistaId = animalito.rescatistaId ?: "",
                             isEditing = editable
                         )
                     }
-
-                    println("DEBUG -> UI State actualizado correctamente")
-
                 } else {
                     val errorMsg = response.message ?: "Error al cargar datos"
-                    println("DEBUG -> Error en response: $errorMsg")
                     _uiState.update { it.copy(loading = false, error = errorMsg) }
                 }
-
             } catch (e: Exception) {
-                println("DEBUG -> Excepción en init: ${e.message}")
-                println("DEBUG -> Stack trace: ${e.stackTraceToString()}")
                 _uiState.update { it.copy(loading = false, error = e.message) }
             }
         }
@@ -127,25 +93,8 @@ class ExpedienteViewModel : ViewModel() {
     fun saveAnimalConRescate(onSuccess: () -> Unit = {}) {
         val state = uiState.value
 
-        println("DEBUG -> saveAnimalConRescate llamado")
-        println("DEBUG -> Estado actual:")
-        println("  - ID: ${state.id}")
-        println("  - Nombre: ${state.nombre}")
-        println("  - Especie: ${state.especie}")
-        println("  - Raza: ${state.raza}")
-        println("  - Edad: ${state.edad}")
-        println("  - Sexo: ${state.sexo}")
-        println("  - Peso: ${state.peso}")
-        println("  - Estado: ${state.estadoSelected}")
-        println("  - URL Imagen: ${state.urlImagen}")
-        println("  - Selected Image URI: ${state.selectedImageUri}")
-        println("  - Lugar Rescate: ${state.lugarRescate}")
-        println("  - Condiciones: ${state.condicionesRescate}")
-        println("  - Fecha Ingreso: ${state.fechaIngreso}")
-
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = null) }
-
 
             val fechaIngreso = state.fechaIngreso
             if (fechaIngreso.isNullOrBlank()) {
@@ -167,42 +116,29 @@ class ExpedienteViewModel : ViewModel() {
                 sexo = state.sexo,
                 peso = state.peso.toDoubleOrNull() ?: 0.0,
                 estado = state.estadoSelected,
-                urlImage = state.selectedImageUri?.toString() ?: state.urlImagen
+                rescatistaId = state.rescatistaId,
+                fechaSalida = state.fechaSalida
             )
 
             val rescateRequest = RescateRequest(
-                fechaIngreso = fechaIngreso,
                 lugar = state.lugarRescate,
                 descripcion = state.condicionesRescate
             )
 
-            println("DEBUG -> AnimalRequest: $animalRequest")
-            println("DEBUG -> RescateRequest: $rescateRequest")
-
             try {
                 val response = if (state.id == null) {
-                    println("DEBUG -> Creando nuevo animal")
                     repository.createConRescate(animalRequest, rescateRequest)
                 } else {
-                    println("DEBUG -> Actualizando animal existente con ID: ${state.id}")
                     repository.updateConRescate(state.id, animalRequest, rescateRequest)
                 }
 
-                println("DEBUG -> Response del guardado: success=${response.success}")
-                println("DEBUG -> Response message: ${response.message}")
-                println("DEBUG -> Response data: ${response.data}")
-
                 if (response.success) {
-                    println("DEBUG -> Guardado exitoso")
                     _uiState.update { it.copy(loading = false, success = true) }
                     onSuccess()
                 } else {
-                    println("DEBUG -> Error en guardado: ${response.message}")
                     _uiState.update { it.copy(loading = false, error = response.message ?: "Error al guardar") }
                 }
             } catch (e: Exception) {
-                println("DEBUG -> Excepción en saveAnimalConRescate: ${e.message}")
-                println("DEBUG -> Stack trace: ${e.stackTraceToString()}")
                 _uiState.update { it.copy(loading = false, error = e.message ?: "Error de conexión") }
             }
         }
@@ -289,7 +225,6 @@ class ExpedienteViewModel : ViewModel() {
     fun savePatient(onSuccess: () -> Unit) {
         val currentState = _uiState.value
 
-        // Validaciones (puedes ajustar según tus requisitos)
         val nombreError = currentState.nombre.isBlank()
         val especieError = currentState.especie.isBlank()
         val edadError = currentState.edad.isBlank() || currentState.edad.toIntOrNull() == null
@@ -304,7 +239,6 @@ class ExpedienteViewModel : ViewModel() {
 
         if (!hasError) {
             saveAnimalConRescate(onSuccess)
-
 
             _uiState.update { it.copy(
                 nombreError = false,
@@ -329,7 +263,6 @@ class ExpedienteViewModel : ViewModel() {
             ) }
         }
     }
-
 }
 
 data class ExpedienteUiState(
@@ -348,6 +281,7 @@ data class ExpedienteUiState(
     val condicionesRescate: String = "",
     val fechaIngreso: String? = null,
     val estadoSelected: String = "En adopción",
+    val rescatistaId: String = "",
     val urlImagen: String = "",
     val selectedImageUri: Uri? = null,
     val isEditing: Boolean = false,

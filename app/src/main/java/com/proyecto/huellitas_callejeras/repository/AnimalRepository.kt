@@ -1,7 +1,10 @@
 package com.proyecto.huellitas_callejeras.repository
 
+import android.content.Context
 import com.proyecto.huellitas_callejeras.models.Animal
 import com.proyecto.huellitas_callejeras.remote.ApiService
+import com.proyecto.huellitas_callejeras.remote.AuthService
+import com.proyecto.huellitas_callejeras.remote.RetrofitClient
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRequest
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRescateRequest
@@ -10,67 +13,85 @@ import com.proyecto.huellitas_callejeras.remote.dto.ApiResponse
 import com.proyecto.huellitas_callejeras.remote.dto.RescateRequest
 import com.proyecto.huellitas_callejeras.remote.dto.toDomain
 
-
 class AnimalRepository(
-    private val api: ApiService
+    private val api: ApiService,
+    private val context: Context
 ) {
+    private val authService = AuthService(context)
+
+    private suspend fun getAuthenticatedService(): ApiService {
+        val token = authService.getToken()
+            ?: throw Exception("No hay sesión activa. Por favor inicia sesión.")
+        return RetrofitClient.createAuthenticatedService(token)
+    }
+
     suspend fun testConnection(): String {
         return try {
-            val response = api.getAnimalitos()
-
-            val lista = response.data ?: emptyList()
-            "Conexión exitosa - Se recibieron ${lista.size} animales"
+            val service = getAuthenticatedService()
+            val response = service.getAnimalitos()
+            val lista = response.data
+            "Conexión exitosa - Se recibieron ${lista?.size} animales"
         } catch (e: Exception) {
-            " Error: ${e.message}"
+            "Error: ${e.message}"
         }
     }
-    suspend fun getAll(): List<Animal> {
-        println("Llamando endpoint GET /animalitos")
 
-        val response = api.getAnimalitos()
-        return response.data?.map { it.toDomain() } ?: emptyList()
+    suspend fun getAll(): List<Animal> {
+        return try {
+            val service = getAuthenticatedService()
+            val response = service.getAnimalitos()
+            response.data?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            throw Exception("Error al cargar los animales: ${e.message}")
+        }
     }
 
-    suspend fun getById(id: String): AnimalDto =
-        api.getAnimalito(id)
+    suspend fun getById(id: String): AnimalDto {
+        val service = getAuthenticatedService()
+        return service.getAnimalito(id)
+    }
 
-    suspend fun create(body: AnimalRequest): AnimalDto =
-        api.createAnimalito(body)
+    suspend fun create(body: AnimalRequest): AnimalDto {
+        val service = getAuthenticatedService()
+        return service.createAnimalito(body)
+    }
 
-    suspend fun update(id: String, body: AnimalRequest): AnimalDto =
-        api.updateAnimalito(id, body)
+    suspend fun update(id: String, body: AnimalRequest): AnimalDto {
+        val service = getAuthenticatedService()
+        return service.updateAnimalito(id, body)
+    }
 
-    suspend fun delete(id: String) =
-        api.deleteAnimalito(id)
-
-    suspend fun createConRescate(animalRequest: AnimalRequest, rescateRequest: RescateRequest): ApiResponse<AnimalRescateResponse> {
-        return try {
-            println("🐛 DEBUG -> Repository.createConRescate INICIADO")
-            println("🐛 DEBUG -> AnimalRequest: $animalRequest")
-            println("🐛 DEBUG -> RescateRequest: $rescateRequest")
-
-            val request = AnimalRescateRequest(animalRequest, rescateRequest)
-            println("🐛 DEBUG -> AnimalRescateRequest: $request")
-
-            println("🐛 DEBUG -> Llamando a api.createAnimalitoConRescate...")
-            val response = api.createAnimalitoConRescate(request)
-            println("🐛 DEBUG -> API Response recibida: $response")
-            println("🐛 DEBUG -> Response success: ${response.success}")
-            println("🐛 DEBUG -> Response message: ${response.message}")
-            println("🐛 DEBUG -> Response data: ${response.data}")
-
-            response
+    suspend fun delete(id: String) {
+        try {
+            val service = getAuthenticatedService()
+            service.deleteAnimalito(id)
         } catch (e: Exception) {
-            println("🐛 DEBUG -> 💥 EXCEPCIÓN en createConRescate: ${e.message}")
-            println("🐛 DEBUG -> Stack trace: ${e.stackTraceToString()}")
+            throw Exception("Error al eliminar el animal: ${e.message}")
+        }
+    }
+
+    suspend fun createConRescate(
+        animalRequest: AnimalRequest,
+        rescateRequest: RescateRequest
+    ): ApiResponse<AnimalRescateResponse> {
+        return try {
+            val service = getAuthenticatedService()
+            val request = AnimalRescateRequest(animalRequest, rescateRequest)
+            service.createAnimalitoConRescate(request)
+        } catch (e: Exception) {
             ApiResponse(success = false, message = "Error: ${e.message}")
         }
     }
 
-    suspend fun updateConRescate(animalId: String, animalRequest: AnimalRequest, rescateRequest: RescateRequest): ApiResponse<AnimalRescateResponse> {
+    suspend fun updateConRescate(
+        animalId: String,
+        animalRequest: AnimalRequest,
+        rescateRequest: RescateRequest
+    ): ApiResponse<AnimalRescateResponse> {
         return try {
+            val service = getAuthenticatedService()
             val request = AnimalRescateRequest(animalRequest, rescateRequest)
-            api.updateAnimalitoConRescate(animalId, request)
+            service.updateAnimalitoConRescate(animalId, request)
         } catch (e: Exception) {
             ApiResponse(success = false, message = "Error: ${e.message}")
         }
@@ -78,14 +99,10 @@ class AnimalRepository(
 
     suspend fun getAnimalitoConRescate(animalId: String): ApiResponse<AnimalRescateResponse> {
         return try {
-            println("DEBUG -> API GET animalitoConRescate: id=$animalId")
-            val result =  api.getAnimalitoConRescate(animalId)
-            println("DEBUG -> API RESULT: $result")
-            return result
+            val service = getAuthenticatedService()
+            service.getAnimalitoConRescate(animalId)
         } catch (e: Exception) {
             ApiResponse(success = false, message = "Error: ${e.message}")
         }
     }
 }
-
-

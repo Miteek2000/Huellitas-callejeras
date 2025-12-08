@@ -1,6 +1,11 @@
 package com.proyecto.huellitas_callejeras.remote
 
+
 import com.proyecto.huellitas_callejeras.models.Animal
+import com.proyecto.huellitas_callejeras.models.CreateRescatistaRequest
+import com.proyecto.huellitas_callejeras.models.LoginRequest
+import com.proyecto.huellitas_callejeras.models.LoginResponse
+import com.proyecto.huellitas_callejeras.models.RescatistaData
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRequest
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRescateRequest
@@ -15,6 +20,7 @@ import com.proyecto.huellitas_callejeras.remote.dto.RescateRequest
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDTO
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoMedicamentoRequest
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoRequest
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -24,31 +30,33 @@ import retrofit2.http.Path
 
 interface ApiService {
 
-    @GET("animalitos")
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+    @GET("animal")
     suspend fun getAnimalitos(): ApiResponse<List<AnimalDto>>
 
-    @GET("animalitos/{id}")
+    @GET("animal/{id}")
     suspend fun getAnimalito(@Path("id") id: String): AnimalDto
 
-    @POST("animalitos")
+    @POST("animal")
     suspend fun createAnimalito(@Body body: AnimalRequest): AnimalDto
 
-    @PUT("animalitos/{id}")
+    @PUT("animal/{id}")
     suspend fun updateAnimalito(@Path("id") id: String, @Body body: AnimalRequest): AnimalDto
 
-    @DELETE("animalitos/{id}")
+    @DELETE("animal/{id}")
     suspend fun deleteAnimalito(@Path("id") id: String)
 
-    @POST("animalitos/crear-con-rescate")
+    @POST("animal/crear-con-rescate")
     suspend fun createAnimalitoConRescate(@Body body: AnimalRescateRequest): ApiResponse<AnimalRescateResponse>
 
-    @PUT("animalitos/{id}/actualizar-con-rescate")
+    @PUT("animal/{id}/actualizar-con-rescate")
     suspend fun updateAnimalitoConRescate(
         @Path("id") id: String,
         @Body body: AnimalRescateRequest
     ): ApiResponse<AnimalRescateResponse>
 
-    @GET("animalitos/{id}/con-rescate")
+    @GET("animal/{id}/con-rescate")
     suspend fun getAnimalitoConRescate(@Path("id") id: String): ApiResponse<AnimalRescateResponse>
     @GET("citas")
     suspend fun getCitas(): ApiResponse<List<CitaDTO>>

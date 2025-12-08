@@ -13,7 +13,7 @@ fun AnimalDto.toDomain(): Animal {
         especie = especie,
         estado = estado,
         fechaSalida = fechaSalida,
-        urlImagen = urlImage
-
+        urlImagen = urlImage,
+        rescatistaId = rescatistaId,
     )
 }

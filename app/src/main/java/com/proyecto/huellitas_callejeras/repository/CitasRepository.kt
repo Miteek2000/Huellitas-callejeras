@@ -1,7 +1,10 @@
 package com.proyecto.huellitas_callejeras.repository
 
+import android.content.Context
 import com.proyecto.huellitas_callejeras.models.Cita
 import com.proyecto.huellitas_callejeras.remote.ApiService
+import com.proyecto.huellitas_callejeras.remote.AuthService
+import com.proyecto.huellitas_callejeras.remote.RetrofitClient
 import com.proyecto.huellitas_callejeras.remote.dto.CitaDTO
 import com.proyecto.huellitas_callejeras.remote.dto.CitaRequest
 import java.time.LocalDateTime
@@ -14,9 +17,20 @@ interface CitasRepository {
     suspend fun createCita(cita: Cita): Cita
     suspend fun updateCita(cita: Cita)
     suspend fun deleteCita(id: String)
-}class CitasRepositoryImpl(
-    private val api: ApiService
+}
+
+class CitasRepositoryImpl(
+    private val api: ApiService,
+    private val context: Context
 ) : CitasRepository {
+
+    private val authService = AuthService(context)
+
+    private suspend fun getAuthenticatedService(): ApiService {
+        val token = authService.getToken()
+            ?: throw Exception("No hay sesión activa. Por favor inicia sesión.")
+        return RetrofitClient.createAuthenticatedService(token)
+    }
 
     private fun dtoToDomain(dto: CitaDTO?): Cita {
         return Cita(
@@ -48,45 +62,75 @@ interface CitasRepository {
     }
 
     override suspend fun getCitas(): List<Cita> {
-        val response = api.getCitas()
-        if (response.success) {
-            return response.data?.map { dtoToDomain(it) } ?: emptyList()
-        } else {
-            throw Exception(response.message ?: "Error al obtener citas")
+        return try {
+            val service = getAuthenticatedService()
+            val response = service.getCitas()
+
+            if (response.success) {
+                response.data?.map { dtoToDomain(it) } ?: emptyList()
+            } else {
+                throw Exception(response.message ?: "Error al obtener citas")
+            }
+        } catch (e: Exception) {
+            throw Exception("Error al cargar las citas: ${e.message}")
         }
     }
 
     override suspend fun getCita(id: String): Cita {
-        val response = api.getCita(id)
-        if (response.success) {
-            return dtoToDomain(response.data)
-        } else {
-            throw Exception(response.message ?: "Error al obtener la cita")
+        return try {
+            val service = getAuthenticatedService()
+            val response = service.getCita(id)
+
+            if (response.success) {
+                dtoToDomain(response.data)
+            } else {
+                throw Exception(response.message ?: "Error al obtener la cita")
+            }
+        } catch (e: Exception) {
+            throw Exception("Error al cargar la cita: ${e.message}")
         }
     }
 
     override suspend fun createCita(cita: Cita): Cita {
-        val body = domainToRequest(cita)
-        val response = api.createCita(body)
-        if (response.success) {
-            return dtoToDomain(response.data)
-        } else {
-            throw Exception(response.message ?: "Error al crear la cita")
+        return try {
+            val service = getAuthenticatedService()
+            val body = domainToRequest(cita)
+            val response = service.createCita(body)
+
+            if (response.success) {
+                dtoToDomain(response.data)
+            } else {
+                throw Exception(response.message ?: "Error al crear la cita")
+            }
+        } catch (e: Exception) {
+            throw Exception("Error al crear la cita: ${e.message}")
         }
     }
 
     override suspend fun updateCita(cita: Cita) {
-        val body = domainToRequest(cita)
-        val response = api.updateCita(cita.idCitas, body)
-        if (!response.success) {
-            throw Exception(response.message ?: "Error al actualizar la cita")
+        try {
+            val service = getAuthenticatedService()
+            val body = domainToRequest(cita)
+            val response = service.updateCita(cita.idCitas, body)
+
+            if (!response.success) {
+                throw Exception(response.message ?: "Error al actualizar la cita")
+            }
+        } catch (e: Exception) {
+            throw Exception("Error al actualizar la cita: ${e.message}")
         }
     }
 
     override suspend fun deleteCita(id: String) {
-        val response = api.deleteCita(id)
-        if (!response.success) {
-            throw Exception(response.message ?: "Error al eliminar la cita")
+        try {
+            val service = getAuthenticatedService()
+            val response = service.deleteCita(id)
+
+            if (!response.success) {
+                throw Exception(response.message ?: "Error al eliminar la cita")
+            }
+        } catch (e: Exception) {
+            throw Exception("Error al eliminar la cita: ${e.message}")
         }
     }
 }

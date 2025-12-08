@@ -83,5 +83,15 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // OkHttp (obligatorio para Retrofit)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+// DataStore para guardar el token
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-core:1.0.0")
+
+// ViewModel KTX
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
 }
 

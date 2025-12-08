@@ -1,7 +1,6 @@
 package com.proyecto.huellitas_callejeras.models
 
 import android.os.Parcelable
-import com.proyecto.huellitas_callejeras.remote.dto.AnimalDto
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -15,5 +14,6 @@ data class Animal(
     val nombre: String,
     val edad: Int,
     val especie: String,
-    val urlImagen: String
+    val urlImagen: String?,
+    val rescatistaId: String
 ) : Parcelable

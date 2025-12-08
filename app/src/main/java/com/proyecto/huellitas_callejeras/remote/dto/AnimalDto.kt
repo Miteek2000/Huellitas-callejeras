@@ -10,18 +10,20 @@ data class AnimalDto(
     val nombre: String,
     val edad: Int,
     val especie: String,
-    val urlImage: String
+    val urlImage: String?,
+    val rescatistaId: String
 )
 
 data class AnimalRequest(
     val peso: Double,
-    val raza: String?,
+    val raza: String,
     val sexo: String,
     val estado: String,
     val nombre: String,
     val edad: Int,
     val especie: String,
-    val urlImage: String
+    val rescatistaId: String,
+    val fechaSalida: String? = null
 )
 
 data class AnimalRescateRequest(
@@ -35,10 +37,8 @@ data class AnimalRescateResponse(
 )
 
 data class RescateRequest(
-    val fechaIngreso: String,
     val lugar: String,
     val descripcion: String
-
 )
 
 
