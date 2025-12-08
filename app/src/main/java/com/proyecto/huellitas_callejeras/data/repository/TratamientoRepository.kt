@@ -1,30 +1,82 @@
 package com.proyecto.huellitas_callejeras.data.repository
 
+import com.google.gson.Gson
 import com.proyecto.huellitas_callejeras.data.dao.MedicamentoDao
 import com.proyecto.huellitas_callejeras.data.dao.TratamientoDao
 import com.proyecto.huellitas_callejeras.data.model.Medicamento
 import com.proyecto.huellitas_callejeras.data.model.Tratamiento
 import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
+import com.proyecto.huellitas_callejeras.data.remote.ApiService
+import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoCreateRequestDto
+import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoDto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 class TratamientoRepository(
+    private val apiService: ApiService,
     private val tratamientoDao: TratamientoDao,
     private val medicamentoDao: MedicamentoDao
 ) {
-    fun obtenerTodosConMedicamentos(): Flow<List<TratamientoConMedicamentos>> {
+
+    suspend fun createTratamiento(tratamientoRequest: TratamientoCreateRequestDto): Result<TratamientoDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.createTratamiento(tratamientoRequest)
+
+                if (response.isSuccessful && response.body() != null && response.body()!!.success) {
+                    response.body()!!.data?.let {
+                        Result.success(it)
+                    } ?: Result.failure(Exception("La API no devolvió datos"))
+                } else {
+                    val errorMsg = response.body()?.message ?: "Error de red: ${response.code()}"
+                    Result.failure(IOException(errorMsg))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun updateTratamiento(tratamientoId: String, tratamientoRequest: TratamientoCreateRequestDto): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.updateTratamiento(tratamientoId, tratamientoRequest)
+
+                if (response.isSuccessful && response.body() != null && response.body()!!.success) {
+                    Result.success(Unit)
+                } else {
+                    val errorMsg = response.body()?.message ?: "Error de red: ${response.code()}"
+                    Result.failure(IOException(errorMsg))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    // --- Métodos de la Base de Datos Local (DAO) ---
+
+    fun obtenerTodosLosTratamientosConMedicamentos(): Flow<List<TratamientoConMedicamentos>> {
         return tratamientoDao.obtenerTratamientosConMedicamentos()
     }
 
-    suspend fun insertarTratamiento(tratamiento: Tratamiento): Long {
-        return tratamientoDao.insertarTratamiento(tratamiento)
+    suspend fun insertarTratamiento(tratamiento: Tratamiento) {
+        tratamientoDao.insertarTratamiento(tratamiento)
     }
 
     suspend fun actualizarTratamiento(tratamiento: Tratamiento) {
         tratamientoDao.actualizarTratamiento(tratamiento)
     }
 
-    suspend fun eliminarTratamiento(tratamiento: Tratamiento) {
+    suspend fun eliminarTratamientoYMedicamentos(tratamientoId: Int) {
+        val tratamiento = Tratamiento(id = tratamientoId, nombre = "", fechaInicio = "", fechaConclusion = "")
         tratamientoDao.eliminarTratamiento(tratamiento)
+    }
+
+    suspend fun obtenerMedicamentoPorId(id: Int): Medicamento? {
+        return medicamentoDao.obtenerMedicamentoPorId(id)
     }
 
     suspend fun insertarMedicamento(medicamento: Medicamento) {
@@ -33,9 +85,5 @@ class TratamientoRepository(
 
     suspend fun actualizarMedicamento(medicamento: Medicamento) {
         medicamentoDao.actualizarMedicamento(medicamento)
-    }
-
-    suspend fun obtenerMedicamentoPorId(id: Int): Medicamento? {
-        return medicamentoDao.obtenerMedicamentoPorId(id)
     }
 }

@@ -11,7 +11,7 @@ import com.proyecto.huellitas_callejeras.data.model.Tratamiento
 
 @Database(
     entities = [Tratamiento::class, Medicamento::class],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class Tratamiento(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val nombre: String,
-    val fechaInicio: String = ""
+    var nombre: String,
+    var fechaInicio: String = "",
+    var fechaConclusion: String = ""
 )

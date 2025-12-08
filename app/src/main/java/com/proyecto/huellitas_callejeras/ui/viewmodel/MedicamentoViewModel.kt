@@ -1,172 +1,158 @@
 package com.proyecto.huellitas_callejeras.ui.viewmodel
 
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.proyecto.huellitas_callejeras.data.model.Medicamento
-import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
+import com.proyecto.huellitas_callejeras.data.repository.MedicamentoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-data class MedicamentoFormState(
+data class FormState(
+    val tratamientoId: Int? = null,
     val medicamentoId: Int? = null,
     val nombre: String = "",
+    val dosis: String = "",
+    val frecuencia: String = "",
     val fechaInicio: String = "",
     val fechaConclusion: String = "",
-    val dosis: String = "",
-    val repeticion: String = "",
     val nombreError: String = "",
-    val fechaInicioError: String = "",
-    val fechaError: String = "",
     val dosisError: String = "",
-    val repeticionError: String = ""
-) {
-    fun isValid(): Boolean {
-        return nombre.isNotEmpty() &&
-                fechaInicio.isNotEmpty() &&
-                fechaConclusion.isNotEmpty() &&
-                dosis.isNotEmpty() &&
-                repeticion.isNotEmpty()
-    }
-}
+    val frecuenciaError: String = ""
+)
 
+@RequiresApi(Build.VERSION_CODES.O)
 class MedicamentoViewModel(
-    private val repository: TratamientoRepository
+    private val repository: MedicamentoRepository
 ) : ViewModel() {
 
-    private val _formState = MutableStateFlow(MedicamentoFormState())
-    val formState: StateFlow<MedicamentoFormState> = _formState.asStateFlow()
+    private val _formState = MutableStateFlow(FormState())
+    val formState: StateFlow<FormState> = _formState.asStateFlow()
 
-    fun cargarMedicamento(medicamentoId: Int) {
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun cargarMedicamento(tratamientoId: Int, medicamentoId: Int) {
         viewModelScope.launch {
+            val med = if (medicamentoId != -1 && medicamentoId != 0) {
+                repository.obtenerMedicamentoPorId(medicamentoId)
+            } else {
+                null
+            }
+
+            if (med != null) {
+                _formState.value = FormState(
+                    tratamientoId = tratamientoId,
+                    medicamentoId = medicamentoId,
+                    nombre = med.nombre,
+                    dosis = med.dosis,
+                    frecuencia = med.frecuencia,
+                    fechaInicio = med.fechaInicio,
+                    fechaConclusion = med.fechaConclusion
+                )
+            } else {
+                limpiarFormulario(tratamientoId = tratamientoId)
+            }
+        }
+    }
+
+    fun limpiarFormulario(tratamientoId: Int? = _formState.value.tratamientoId) {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        _formState.value = FormState(
+            tratamientoId = tratamientoId,
+            fechaInicio = today,
+            fechaConclusion = today
+        )
+    }
+
+    fun actualizarNombre(nombre: String) {
+        _formState.update { it.copy(nombre = nombre, nombreError = "") }
+    }
+
+    fun actualizarDosis(dosis: String) {
+        _formState.update { it.copy(dosis = dosis, dosisError = "") }
+    }
+
+    fun actualizarFrecuencia(frecuencia: String) {
+        _formState.update { it.copy(frecuencia = frecuencia, frecuenciaError = "") }
+    }
+
+    fun actualizarFechaConclusion(fecha: String) {
+        _formState.update { it.copy(fechaConclusion = fecha) }
+    }
+
+    fun guardarMedicamento(onSuccess: () -> Unit) {
+        if (!validarFormulario()) return
+
+        viewModelScope.launch {
+            _isLoading.value = true
             try {
-                val medicamento = repository.obtenerMedicamentoPorId(medicamentoId)
-                medicamento?.let { med ->
-                    _formState.value = MedicamentoFormState(
-                        medicamentoId = med.id,
-                        nombre = med.nombre,
-                        fechaInicio = med.fechaInicio,
-                        fechaConclusion = med.fechaConclusion,
-                        dosis = med.dosis,
-                        repeticion = med.repeticion
-                    )
-                    Log.d("MedicamentoViewModel", "Medicamento cargado: ${med.nombre}")
+                val state = _formState.value
+                val medicamento = Medicamento(
+                    id = state.medicamentoId ?: 0,
+                    tratamientoId = state.tratamientoId ?: throw IllegalStateException("Tratamiento ID no puede ser nulo"),
+                    nombre = state.nombre,
+                    dosis = state.dosis,
+                    frecuencia = state.frecuencia,
+                    fechaInicio = state.fechaInicio,
+                    fechaConclusion = state.fechaConclusion
+                )
+
+                if (medicamento.id == 0) {
+                    repository.insertarMedicamentoLocal(medicamento)
+                } else {
+                    repository.actualizarMedicamentoLocal(medicamento)
                 }
+                onSuccess()
             } catch (e: Exception) {
-                Log.e("MedicamentoViewModel", "Error al cargar medicamento: ${e.message}", e)
+                _error.value = "Error al guardar el medicamento: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    fun actualizarNombre(valor: String) {
-        _formState.value = _formState.value.copy(
-            nombre = valor,
-            nombreError = ""
-        )
-    }
-
-    fun actualizarFechaInicio(valor: String) {
-        _formState.value = _formState.value.copy(
-            fechaInicio = valor,
-            fechaInicioError = ""
-        )
-    }
-
-    fun actualizarFechaConclusion(valor: String) {
-        _formState.value = _formState.value.copy(
-            fechaConclusion = valor,
-            fechaError = ""
-        )
-    }
-
-    fun actualizarDosis(valor: String) {
-        _formState.value = _formState.value.copy(
-            dosis = valor,
-            dosisError = ""
-        )
-    }
-
-    fun actualizarRepeticion(valor: String) {
-        _formState.value = _formState.value.copy(
-            repeticion = valor,
-            repeticionError = ""
-        )
-    }
-
-    fun validarTodo(): Boolean {
+    private fun validarFormulario(): Boolean {
         val state = _formState.value
+        var esValido = true
 
-        val nombreError = if (state.nombre.isEmpty()) "Campo obligatorio" else ""
-        val fechaInicioError = if (state.fechaInicio.isEmpty()) "Campo obligatorio" else ""
-        val fechaError = if (state.fechaConclusion.isEmpty()) "Campo obligatorio" else ""
-        val dosisError = if (state.dosis.isEmpty()) "Campo obligatorio" else ""
-        val repeticionError = if (state.repeticion.isEmpty()) "Campo obligatorio" else ""
-
-        _formState.value = state.copy(
-            nombreError = nombreError,
-            fechaInicioError = fechaInicioError,
-            fechaError = fechaError,
-            dosisError = dosisError,
-            repeticionError = repeticionError
-        )
-
-        return nombreError.isEmpty() &&
-                fechaInicioError.isEmpty() &&
-                fechaError.isEmpty() &&
-                dosisError.isEmpty() &&
-                repeticionError.isEmpty()
-    }
-
-    fun guardarMedicamento(tratamientoId: Int, onSuccess: () -> Unit) {
-        Log.d("MedicamentoViewModel", "guardarMedicamento llamado")
-
-        if (validarTodo()) {
-            Log.d("MedicamentoViewModel", "Validación OK")
-            viewModelScope.launch {
-                try {
-                    val medicamento = Medicamento(
-                        id = _formState.value.medicamentoId ?: 0,
-                        tratamientoId = tratamientoId,
-                        nombre = _formState.value.nombre,
-                        fechaInicio = _formState.value.fechaInicio,
-                        fechaConclusion = _formState.value.fechaConclusion,
-                        dosis = _formState.value.dosis,
-                        repeticion = _formState.value.repeticion
-                    )
-
-                    if (_formState.value.medicamentoId == null) {
-                        repository.insertarMedicamento(medicamento)
-                        Log.d("MedicamentoViewModel", "Medicamento insertado")
-                    } else {
-                        repository.actualizarMedicamento(medicamento)
-                        Log.d("MedicamentoViewModel", "Medicamento actualizado")
-                    }
-
-                    limpiarFormulario()
-                    onSuccess()
-                } catch (e: Exception) {
-                    Log.e("MedicamentoViewModel", "Error al guardar: ${e.message}", e)
-                }
-            }
-        } else {
-            Log.d("MedicamentoViewModel", "Validación falló")
+        if (state.nombre.isBlank()) {
+            _formState.update { it.copy(nombreError = "El nombre no puede estar vacío") }
+            esValido = false
         }
+        if (state.dosis.isBlank()) {
+            _formState.update { it.copy(dosisError = "La dosis no puede estar vacía") }
+            esValido = false
+        }
+        if (state.frecuencia.isBlank()) {
+            _formState.update { it.copy(frecuenciaError = "La frecuencia no puede estar vacía") }
+            esValido = false
+        }
+
+        return esValido
     }
 
-    fun limpiarFormulario() {
-        _formState.value = MedicamentoFormState()
+    fun resetError() {
+        _error.value = null
     }
 }
 
-class MedicamentoViewModelFactory(
-    private val repository: TratamientoRepository
-) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
+@RequiresApi(Build.VERSION_CODES.O)
+class MedicamentoViewModelFactory(private val repository: MedicamentoRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MedicamentoViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
             return MedicamentoViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

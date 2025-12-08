@@ -1,12 +1,16 @@
 package com.proyecto.huellitas_callejeras.ui.screens
 
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,30 +21,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.proyecto.huellitas_callejeras.ui.components.HeaderBar
-import com.proyecto.huellitas_callejeras.ui.utils.DateUtils
 import com.proyecto.huellitas_callejeras.ui.viewmodel.MedicamentoViewModel
-import kotlinx.coroutines.delay
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicamentoFormScreen(
-    tratamientoId: Int,
     viewModel: MedicamentoViewModel,
     onNavigateBack: () -> Unit
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
-    var showDatePickerInicio by remember { mutableStateOf(false) }
-    var showDatePickerConclusion by remember { mutableStateOf(false) }
-    val datePickerStateInicio = rememberDatePickerState()
-    val datePickerStateConclusion = rememberDatePickerState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    var showSuccessMessage by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    LaunchedEffect(error) {
+        error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.resetError()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .background(Color(0xFFF5F5F5))
         ) {
             HeaderBar()
@@ -63,12 +79,11 @@ fun MedicamentoFormScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFD5A6D5)
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFD5A6D5)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Column(
@@ -77,20 +92,21 @@ fun MedicamentoFormScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Medicamento
+                        Text(
+                            text = if (formState.medicamentoId == null || formState.medicamentoId == 0) "Nuevo Medicamento" else "Editar Medicamento",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
                         Column {
-                            Text(
-                                text = "Medicamento",
-                                fontSize = 13.sp,
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
+                            Text("Medicamento", fontSize = 13.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
                             OutlinedTextField(
                                 value = formState.nombre,
                                 onValueChange = { viewModel.actualizarNombre(it) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
+                                isError = formState.nombreError.isNotEmpty(),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.White,
                                     unfocusedContainerColor = Color.White,
@@ -100,90 +116,13 @@ fun MedicamentoFormScreen(
                             )
                         }
 
-                        // Fecha Inicio
                         Column {
-                            Text(
-                                text = "Fecha Inicio",
-                                fontSize = 13.sp,
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
-                            OutlinedTextField(
-                                value = formState.fechaInicio,
-                                onValueChange = {},
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                readOnly = true,
-                                placeholder = { Text("DD/MM/AAAA", fontSize = 13.sp) },
-                                trailingIcon = {
-                                    IconButton(onClick = { showDatePickerInicio = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.CalendarToday,
-                                            contentDescription = "Seleccionar fecha",
-                                            tint = Color.Black,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                },
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color.White,
-                                    unfocusedContainerColor = Color.White,
-                                    unfocusedBorderColor = Color.White
-                                ),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                        }
-
-                        // Fecha Conclusión
-                        Column {
-                            Text(
-                                text = "Fecha de Conclusión",
-                                fontSize = 13.sp,
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
-                            OutlinedTextField(
-                                value = formState.fechaConclusion,
-                                onValueChange = {},
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                readOnly = true,
-                                placeholder = { Text("DD/MM/AAAA", fontSize = 13.sp) },
-                                trailingIcon = {
-                                    IconButton(onClick = { showDatePickerConclusion = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.CalendarToday,
-                                            contentDescription = "Seleccionar fecha",
-                                            tint = Color.Black,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                },
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color.White,
-                                    unfocusedContainerColor = Color.White,
-                                    unfocusedBorderColor = Color.White
-                                ),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                        }
-
-                        // Dosis
-                        Column {
-                            Text(
-                                text = "Dosis",
-                                fontSize = 13.sp,
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
+                            Text("Dosis", fontSize = 13.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
                             OutlinedTextField(
                                 value = formState.dosis,
                                 onValueChange = { viewModel.actualizarDosis(it) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
+                                isError = formState.dosisError.isNotEmpty(),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.White,
                                     unfocusedContainerColor = Color.White,
@@ -193,20 +132,13 @@ fun MedicamentoFormScreen(
                             )
                         }
 
-                        // Repetición
                         Column {
-                            Text(
-                                text = "Repetición",
-                                fontSize = 13.sp,
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 4.dp)
-                            )
+                             Text("Frecuencia", fontSize = 13.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
                             OutlinedTextField(
-                                value = formState.repeticion,
-                                onValueChange = { viewModel.actualizarRepeticion(it) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
+                                value = formState.frecuencia,
+                                onValueChange = { viewModel.actualizarFrecuencia(it) },
+                                isError = formState.frecuenciaError.isNotEmpty(),
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.White,
                                     unfocusedContainerColor = Color.White,
@@ -216,149 +148,88 @@ fun MedicamentoFormScreen(
                             )
                         }
 
-                        // Botones
+                        Column {
+                            Text("Fecha de Conclusión", fontSize = 13.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
+                            OutlinedTextField(
+                                value = formState.fechaConclusion,
+                                onValueChange = {}, // Not needed as it's read-only
+                                readOnly = true,
+                                modifier = Modifier.fillMaxWidth().height(48.dp).clickable { showDatePicker = true },
+                                trailingIcon = {
+                                    Icon(Icons.Default.EditCalendar, contentDescription = "Seleccionar fecha")
+                                },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    unfocusedBorderColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                        }
+
+
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Button(
-                                onClick = {
-                                    viewModel.limpiarFormulario()
-                                    onNavigateBack()
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(40.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.White
-                                ),
+                             Button(
+                                onClick = onNavigateBack,
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                                 shape = RoundedCornerShape(4.dp)
                             ) {
-                                Text(
-                                    text = "Cancelar",
-                                    color = Color.Black,
-                                    fontSize = 13.sp
-                                )
+                                Text("Cancelar", color = Color.Black, fontSize = 13.sp)
                             }
                             Button(
                                 onClick = {
-                                    viewModel.guardarMedicamento(tratamientoId) {
-                                        showSuccessMessage = true
+                                    viewModel.guardarMedicamento {
+                                        onNavigateBack()
                                     }
                                 },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(40.dp),
-                                enabled = formState.isValid(),
+                                enabled = !isLoading,
+                                modifier = Modifier.weight(1f).height(40.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF7CB342),
                                     disabledContainerColor = Color.Gray
                                 ),
                                 shape = RoundedCornerShape(4.dp)
                             ) {
-                                Text(
-                                    text = "Guardar",
-                                    color = Color.White,
-                                    fontSize = 13.sp
-                                )
+                                if (isLoading) {
+                                    CircularProgressIndicator(Modifier.size(20.dp), color = Color.White)
+                                } else {
+                                    Text("Guardar", color = Color.White, fontSize = 13.sp)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
 
-        if (showSuccessMessage) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    modifier = Modifier
-                        .padding(32.dp)
-                        .fillMaxWidth(0.8f),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "✓",
-                            fontSize = 48.sp,
-                            color = Color(0xFF4CAF50),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "¡Guardado con éxito!",
-                            fontSize = 18.sp,
-                            color = Color.Black,
-                            fontWeight = FontWeight.Medium
-                        )
-                        LaunchedEffect(Unit) {
-                            delay(2000)
-                            showSuccessMessage = false
-                            onNavigateBack()
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                            viewModel.actualizarFechaConclusion(selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
                         }
+                        showDatePicker = false
                     }
-                }
-            }
-        }
-    }
-
-    if (showDatePickerInicio) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePickerInicio = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerStateInicio.selectedDateMillis?.let {
-                        viewModel.actualizarFechaInicio(DateUtils.formatTimestamp(it))
-                    }
-                    showDatePickerInicio = false
-                }) {
+                ) {
                     Text("OK")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePickerInicio = false }) {
+                TextButton(onClick = { showDatePicker = false }) {
                     Text("Cancelar")
                 }
             }
         ) {
-            DatePicker(state = datePickerStateInicio)
-        }
-    }
-
-    if (showDatePickerConclusion) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePickerConclusion = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerStateConclusion.selectedDateMillis?.let {
-                        viewModel.actualizarFechaConclusion(DateUtils.formatTimestamp(it))
-                    }
-                    showDatePickerConclusion = false
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePickerConclusion = false }) {
-                    Text("Cancelar")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerStateConclusion)
+            DatePicker(state = datePickerState)
         }
     }
 }
