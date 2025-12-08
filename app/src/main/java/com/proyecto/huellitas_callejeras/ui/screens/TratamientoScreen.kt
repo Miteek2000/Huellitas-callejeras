@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -384,16 +385,26 @@ fun MedicamentoCard(
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(text = medicamento.nombre, fontWeight = FontWeight.Bold)
-            Text(text = "Dosis: ${medicamento.dosis}")
-            Text(text = "Frecuencia: ${medicamento.frecuencia}")
-            Button(onClick = { onEdit(medicamento.id) }) {
-                Text("Editar")
+            Column(
+                modifier = Modifier.align(Alignment.TopStart)
+            ) {
+                Text(text = medicamento.nombre, fontWeight = FontWeight.Bold)
+                Text(text = "Dosis: ${medicamento.dosis}")
+                Text(text = "Frecuencia: ${medicamento.frecuencia}")
+            }
+            IconButton(
+                onClick = { onEdit(medicamento.id) },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Editar Medicamento"
+                )
             }
         }
     }
