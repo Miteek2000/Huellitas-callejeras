@@ -124,8 +124,7 @@ class ExpedienteViewModel : ViewModel() {
                 sexo = state.sexo,
                 peso = state.peso.toDoubleOrNull() ?: 0.0,
                 estado = state.estadoSelected,
-                rescatistaId = rescatistaId,
-                fechaSalida = state.fechaSalida
+                rescatistaId = rescatistaId
             )
 
             val rescateRequest = RescateRequest(

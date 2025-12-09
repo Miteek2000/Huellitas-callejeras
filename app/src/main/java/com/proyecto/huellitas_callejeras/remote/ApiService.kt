@@ -64,10 +64,11 @@ interface ApiService {
         @Part imagen: MultipartBody.Part?
     ): ApiResponse<AnimalRescateResponse>
 
-    @PUT("animal/{id}/con-rescate")
+    @PUT("animal/{id}/actualizar-con-rescate")
     suspend fun updateAnimalitoConRescate(
         @Path("id") id: String,
-        @Body request: AnimalRescateRequest
+        @Part("animal") animal: RequestBody,
+        @Part("rescate") rescate: RequestBody,
     ): ApiResponse<AnimalRescateResponse>
 
     @Multipart

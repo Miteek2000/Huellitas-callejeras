@@ -2,34 +2,14 @@ package com.proyecto.huellitas_callejeras.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,11 +20,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.proyecto.huellitas_callejeras.screens.components.AnimalSearchDropdown
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarCitaScreen(
     navController: NavController,
-    viewModel: CitasMedicasViewModel = viewModel()
+    viewModel: CitasMedicasViewModel = viewModel(),
+    citaId: String = ""
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val allAnimals by viewModel.allAnimals.collectAsState()
@@ -53,56 +35,83 @@ fun EditarCitaScreen(
     val loading = uiState.loading
     val error = uiState.error
 
-    val citaId = remember {
-        navController.currentBackStackEntry?.arguments?.getString("id")
-    }
+    val isEditMode = citaId.isNotEmpty()
 
 
     LaunchedEffect(citaId) {
-        if (citaId != null && citaId.isNotEmpty()) {
+        if (isEditMode) {
 
-            if (uiState.cita?.id != citaId) {
-                viewModel.getCitaPorId(citaId) { cita ->
-                    cita?.let {
-                        viewModel.setEditingCita(it)
+            viewModel.getCitaPorId(citaId) { cita ->
+                if (cita != null) {
+                    viewModel.setEditingCita(cita)
 
-                        if (it.animalId.isNotEmpty()) {
-                            val animal = allAnimals.find { animal ->
-                                animal.idAnimal == it.animalId
-                            }
-                            animal?.let { foundAnimal ->
-                                viewModel.setSelectedAnimal(foundAnimal)
-                            }
+                    if (cita.animalId.isNotEmpty()) {
+                        val animal = allAnimals.find { animal ->
+                            animal.idAnimal == cita.animalId
                         }
-                    } ?: run {
-                        navController.popBackStack()
+                        animal?.let { foundAnimal ->
+                            viewModel.setSelectedAnimal(foundAnimal)
+                        }
                     }
+                } else {
+                    navController.popBackStack()
                 }
             }
         } else {
+            viewModel.setEditingCita(viewModel.nuevaCitaVacia())
+        }
+    }
 
-            if (uiState.cita == null) {
-                viewModel.setEditingCita(viewModel.nuevaCitaVacia())
+    LaunchedEffect(Unit) {
+        if (allAnimals.isEmpty()) {
+            viewModel.cargarAnimales()
+        }
+    }
+
+    LaunchedEffect(selectedAnimal) {
+        selectedAnimal?.let { animal ->
+            uiState.cita?.let { cita ->
+                if (cita.animalId != animal.idAnimal) {  // ← CAMBIÉ animalitoId por animalId
+                    viewModel.updateEditingCita {
+                        it.copy(animalId = animal.idAnimal)  // ← CAMBIÉ animalitoId por animalId
+                    }
+                }
             }
         }
     }
 
+    // Mostrar loading inicial
     if (loading && allAnimals.isEmpty()) {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(color = Color(0xFF5B2D5B))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Cargando animales...", color = Color.Gray)
+                Text("Cargando...", color = Color.Gray)
             }
         }
         return
     }
 
+    // Obtener la cita actual o crear una nueva
     val cita = uiState.cita ?: run {
-        LaunchedEffect(Unit) {
-            navController.popBackStack()
+        // Si estamos en modo edición y no hay cita, mostrar error
+        if (isEditMode) {
+            Box(Modifier.fillMaxSize(), Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Error: Cita no encontrada", color = Color.Red)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Text("Regresar")
+                    }
+                }
+            }
+            return
+        } else {
+            // En modo creación, crear una nueva cita
+            viewModel.nuevaCitaVacia()
         }
-        return
     }
 
     Column(
@@ -111,7 +120,7 @@ fun EditarCitaScreen(
             .background(Color.White)
             .verticalScroll(rememberScrollState())
     ) {
-
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,13 +134,14 @@ fun EditarCitaScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             Text(
-                text = if (citaId != null) "Editar Cita" else "Nueva Cita",
+                text = if (isEditMode) "Editar Cita" else "Nueva Cita",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
 
+        // Formulario
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -140,7 +150,7 @@ fun EditarCitaScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
+            // Título
             CitaTextField(
                 label = "Título *",
                 value = cita.titulo,
@@ -157,6 +167,7 @@ fun EditarCitaScreen(
                     .fillMaxWidth()
                     .padding(bottom = 4.dp)
             )
+
             AnimalSearchDropdown(
                 animals = allAnimals,
                 selectedAnimal = selectedAnimal,
@@ -164,7 +175,8 @@ fun EditarCitaScreen(
                     viewModel.onAnimalSelected(animal)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                label = "Escribe el nombre del animalito"
+                label = if (selectedAnimal == null) "Escribe el nombre del animalito"
+                else selectedAnimal!!.nombre
             )
 
             Spacer(Modifier.height(16.dp))
@@ -190,7 +202,7 @@ fun EditarCitaScreen(
                 value = cita.motivo,
                 onValueChange = { newValue ->
                     viewModel.updateEditingCita { it.copy(motivo = newValue) }
-                }
+                },
             )
 
             Spacer(Modifier.height(24.dp))
@@ -199,6 +211,7 @@ fun EditarCitaScreen(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
+
                 Button(
                     onClick = {
                         viewModel.clearEditingCita()
@@ -209,6 +222,7 @@ fun EditarCitaScreen(
                 ) {
                     Text("Cancelar", color = Color.Black)
                 }
+
 
                 Button(
                     onClick = {
@@ -222,7 +236,7 @@ fun EditarCitaScreen(
                             cita.fechaCita.isNotEmpty() &&
                             cita.lugar.isNotEmpty() &&
                             cita.motivo.isNotEmpty() &&
-                            cita.animalId.isNotEmpty() &&
+                            cita.animalId.isNotEmpty() &&  // ← CAMBIÉ animalitoId por animalId
                             !loading
                 ) {
                     Text(
@@ -230,14 +244,6 @@ fun EditarCitaScreen(
                         color = Color.White
                     )
                 }
-            }
-
-            error?.let {
-                Text(
-                    text = it,
-                    color = Color.Red,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
             }
         }
     }

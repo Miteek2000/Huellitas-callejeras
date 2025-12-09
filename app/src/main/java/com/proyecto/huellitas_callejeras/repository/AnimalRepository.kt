@@ -143,8 +143,12 @@ class AnimalRepository(
 
                 service.updateAnimalitoConRescateConImagen(animalId, animalBody, rescateBody, imagePart)
             } else {
-                val request = AnimalRescateRequest(animalRequest, rescateRequest)
-                service.updateAnimalitoConRescate(animalId, request)
+                val gson = Gson()
+                val animalJson = gson.toJson(animalRequest)
+                val rescateJson = gson.toJson(rescateRequest)
+                val animalBody = animalJson.toRequestBody("text/plain".toMediaTypeOrNull())
+                val rescateBody = rescateJson.toRequestBody("text/plain".toMediaTypeOrNull())
+                service.updateAnimalitoConRescate(animalId, animalBody, rescateBody)
             }
         } catch (e: Exception) {
             ApiResponse(success = false, message = "Error: ${e.message}")

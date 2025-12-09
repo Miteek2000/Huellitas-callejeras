@@ -22,8 +22,7 @@ data class AnimalRequest(
     val nombre: String,
     val edad: Int,
     val especie: String,
-    val rescatistaId: String,
-    val fechaSalida: String? = null
+    val rescatistaId: String
 )
 
 data class AnimalRescateRequest(

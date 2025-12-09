@@ -2,6 +2,7 @@
 package com.proyecto.huellitas_callejeras.navegacion
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,12 +24,10 @@ fun NavManager() {
 
     NavHost(navController = navController, startDestination = AppScreens.InicioSesion.route) {
 
-        // Pantalla de Inicio de Sesión
         composable(AppScreens.InicioSesion.route) {
             InicioSesionScreen(navController)
         }
 
-        // Pantalla de Galería
         composable(
             route = AppScreens.GaleriaScreen.route + "?from={from}",
             arguments = listOf(navArgument("from") {
@@ -41,7 +40,6 @@ fun NavManager() {
             GaleriaScreen(navController, galeriaViewModel, from = from)
         }
 
-        // Pantalla de Expediente
         composable(
             route = AppScreens.ExpedienteScreen.route + "?patientId={patientId}&editable={editable}",
             arguments = listOf(
@@ -62,16 +60,36 @@ fun NavManager() {
             ExpedienteScreen(navController, expedienteViewModel, patientId, editable)
         }
 
-        // Pantalla de Citas Médicas
         composable(AppScreens.CitasMedicasScreen.route) {
             val citasMedicasViewModel: CitasMedicasViewModel = viewModel()
             CitasMedicasScreen(navController, citasMedicasViewModel)
         }
 
-        // Pantalla de Editar Cita
-        composable(AppScreens.EditarCitaScreen.route) {
+        composable(AppScreens.EditarCitaScreen.route + "?id={id}",
+            arguments = listOf(
+                navArgument("id") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
+            )
+            ){ backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
             val citasMedicasViewModel: CitasMedicasViewModel = viewModel()
-            EditarCitaScreen(navController, citasMedicasViewModel)
+
+            LaunchedEffect(id) {
+                if (id.isNotEmpty()) {
+                    citasMedicasViewModel.getCitaPorId(id) { cita ->
+                        cita?.let {
+                            citasMedicasViewModel.setEditingCita(it)
+                        }
+                    }
+                } else {
+                    citasMedicasViewModel.setEditingCita(citasMedicasViewModel.nuevaCitaVacia())
+                }
+            }
+
+            EditarCitaScreen(navController, citasMedicasViewModel, id)
         }
     }
 }
