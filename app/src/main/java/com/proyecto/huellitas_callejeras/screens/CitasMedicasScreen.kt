@@ -3,6 +3,7 @@ package com.proyecto.huellitas_callejeras.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import java.text.SimpleDateFormat
@@ -54,7 +56,15 @@ import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.Calendar
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitasMedicasScreen(
@@ -65,10 +75,14 @@ fun CitasMedicasScreen(
     val calendar by viewModel.calendar.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
 
+    LaunchedEffect(calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR)) {
+        viewModel.cargarCitas()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Huellitas Callejeras") },
+                title = { Text("Citas Médicas") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5B2D5B),
                     titleContentColor = Color.White
@@ -78,13 +92,17 @@ fun CitasMedicasScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    viewModel.setEditingCita(viewModel.nuevaCitaVacia())
+                    val nuevaCita = viewModel.nuevaCitaVacia().copy(
+                        fechaCita = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+                            .format(Date(selectedDate))
+                    )
+                    viewModel.setEditingCita(nuevaCita)
                     navController.navigate(AppScreens.EditarCitaScreen.route)
                 },
                 containerColor = Color(0xFF5B2D5B),
                 contentColor = Color.White
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Cita")
+                Icon(Icons.Filled.Add, contentDescription = "Agregar cita")
             }
         }
     ) { paddingValues ->
@@ -94,106 +112,129 @@ fun CitasMedicasScreen(
                 .padding(paddingValues)
                 .background(Color.White)
         ) {
-            // Header de Citas Médicas
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFE8C6D4))
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "Citas Médicas",
-                    fontSize = 20.sp,
-                    color = Color(0xFF5B2D5B),
-                    fontWeight = FontWeight.Bold
-                )
-            }
 
-            // Tu componente Calendar existente - CORREGIDO
             Calendar(
                 calendar = calendar,
-                onDateSelected = viewModel::onDateSelected,
+                onDateSelected = { dateMillis ->
+                    viewModel.onDateSelected(dateMillis)
+                },
                 onMonthChanged = viewModel::onMonthChanged,
                 onYearChanged = viewModel::onYearChanged,
                 datesWithAppointments = viewModel.datesWithAppointments
             )
 
-            // Mostrar la fecha seleccionada
             val selectedDateFormatted = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 .format(Date(selectedDate))
 
-            Text(
-                text = "Citas para: $selectedDateFormatted",
-                modifier = Modifier.padding(16.dp),
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF5B2D5B),
-                fontSize = 16.sp
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Citas para: $selectedDateFormatted",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF5B2D5B),
+                    fontSize = 16.sp
+                )
 
-            // Lista de citas para la fecha seleccionada
-            LazyColumn(
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(
+                    text = "${viewModel.appointmentsForSelectedDate.size} citas",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(horizontal = 16.dp)
             ) {
                 val citasDelDia = viewModel.appointmentsForSelectedDate
 
                 if (citasDelDia.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "No hay citas para esta fecha",
-                                color = Color.Gray,
-                                fontSize = 16.sp
-                            )
-                        }
-                    }
-                } else {
-                    items(citasDelDia) { cita ->
-                        AppointmentCard(
-                            cita = cita,
-                            onEditClick = {
-                                viewModel.setEditingCita(cita)
-                                navController.navigate(
-                                    AppScreens.EditarCitaScreen.route + "?id=${cita.idCitas}"
-                                )
-                            },
-                            onDeleteClick = {
-                                viewModel.eliminarCita(cita.idCitas)
-                            },
-                            onPatientIconClick = {
-                                val animalId = viewModel.onPatientIconClicked(cita)
-                                animalId?.let { id ->
-                                    navController.navigate(
-                                        AppScreens.ExpedienteScreen.route + "?patientId=$id&editable=false"
-                                    )
-                                }
-                            }
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.calender),
+                            contentDescription = "Sin citas",
+                            tint = Color.LightGray,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "No hay citas para esta fecha",
+                            color = Color.Gray,
+                            fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Toca el botón + para agregar una",
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        items(citasDelDia) { cita ->
+                            AppointmentCard(
+                                cita = cita,
+                                onEditClick = {
+                                    viewModel.setEditingCita(cita)
+                                    navController.navigate(
+                                        AppScreens.EditarCitaScreen.route + "?id=${cita.id}"
+                                    )
+                                },
+                                onDeleteClick = {
+                                    // Mostrar confirmación antes de eliminar
+                                    viewModel.eliminarCita(cita.id) {
+                                        viewModel.filtrarCitasPorFecha(selectedDate)
+                                    }
+                                },
+                                onPatientIconClick = {
+                                    val animalId = viewModel.onPatientIconClicked(cita)
+                                    animalId?.let { id ->
+                                        navController.navigate(
+                                            AppScreens.ExpedienteScreen.route + "?patientId=$id&editable=false"
+                                        )
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
                 }
             }
 
-            // Mostrar errores
             uiState.error?.let { error ->
                 if (error.isNotEmpty()) {
-                    Text(
-                        text = error,
-                        color = Color.Red,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0x1AFF0000), RoundedCornerShape(8.dp))
+                                .padding(12.dp)
+                        )
+                    }
                 }
             }
 
-            // Mostrar loading
             if (uiState.loading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -206,7 +247,6 @@ fun CitasMedicasScreen(
     }
 }
 
-
 @Composable
 fun AppointmentCard(
     cita: Cita,
@@ -214,23 +254,57 @@ fun AppointmentCard(
     onDeleteClick: () -> Unit,
     onPatientIconClick: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF7D0E2))
+            .fillMaxWidth()
+            .clickable {
+                onEditClick()
+            },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF7D0E2)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
+
+        if (showDeleteConfirm) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                title = { Text("Confirmar eliminación") },
+                text = { Text("¿Estás seguro de que quieres eliminar esta cita?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteConfirm = false
+                            onDeleteClick()
+                        }
+                    ) {
+                        Text("Eliminar", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteConfirm = false }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
         ConstraintLayout(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            val (title, edit, delete, date, place, realization, patientInfo) = createRefs()
+            val (title, time, edit, delete, details, patient) = createRefs()
 
             Text(
                 cita.titulo,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.constrainAs(title) {
                     top.linkTo(parent.top)
                     start.linkTo(parent.start)
@@ -239,22 +313,40 @@ fun AppointmentCard(
                 }
             )
 
+            val timeText = try {
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+                val date = sdf.parse(cita.fechaCita)
+                SimpleDateFormat("HH:mm", Locale.getDefault()).format(date ?: Date())
+            } catch (e: Exception) {
+                "Sin hora"
+            }
+
+            Text(
+                timeText,
+                color = Color(0xFF5B2D5B),
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.constrainAs(time) {
+                    top.linkTo(title.bottom, margin = 4.dp)
+                    start.linkTo(parent.start)
+                }
+            )
+
             IconButton(
                 onClick = onEditClick,
                 modifier = Modifier.constrainAs(edit) {
                     top.linkTo(parent.top)
-                    end.linkTo(delete.start, margin = 8.dp)
+                    end.linkTo(delete.start)
                 }
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.edittratamiento),
-                    contentDescription = "Edit",
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = "Editar cita",
+                    tint = Color(0xFF5B2D5B)
                 )
             }
 
             IconButton(
-                onClick = onDeleteClick,
+                onClick = { showDeleteConfirm = true },
                 modifier = Modifier.constrainAs(delete) {
                     top.linkTo(parent.top)
                     end.linkTo(parent.end)
@@ -262,80 +354,61 @@ fun AppointmentCard(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.basura),
-                    contentDescription = "Delete",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Text(
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append("Fecha Cita: ")
-                    }
-                    append(cita.fechaCita)
-                },
-                modifier = Modifier.constrainAs(date) {
-                    top.linkTo(title.bottom, margin = 16.dp)
-                    start.linkTo(parent.start)
-                }
-            )
-
-            Text(
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append("Lugar: ")
-                    }
-                    append(cita.lugar)
-                },
-                modifier = Modifier.constrainAs(place) {
-                    top.linkTo(date.bottom, margin = 8.dp)
-                    start.linkTo(parent.start)
-                }
-            )
-
-            if (cita.fechaRealizacion.isNotEmpty()) {
-                Text(
-                    buildAnnotatedString {
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append("Fecha Realización: ")
-                        }
-                        append(cita.fechaRealizacion)
-                    },
-                    modifier = Modifier.constrainAs(realization) {
-                        top.linkTo(place.bottom, margin = 8.dp)
-                        start.linkTo(parent.start)
-                    }
+                    contentDescription = "Eliminar cita",
+                    tint = Color.Red
                 )
             }
 
             Column(
-                modifier = Modifier.constrainAs(patientInfo) {
-                    bottom.linkTo(parent.bottom)
-                    end.linkTo(parent.end)
-                    top.linkTo(place.bottom, margin = 8.dp)
-                },
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.constrainAs(details) {
+                    top.linkTo(time.bottom, margin = 12.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(patient.start)
+                    width = Dimension.fillToConstraints
+                }
             ) {
-
-                if (cita.animalitoId.isNotEmpty()) {
+                if (cita.motivo.isNotEmpty()) {
                     Text(
-                        text = "Paciente",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        "Motivo: ${cita.motivo}",
+                        fontSize = 14.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Icon(
-                    painter = painterResource(id = R.drawable.dog),
-                    contentDescription = "Ver expediente del paciente",
-                    tint = Color.Unspecified,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable(
-                            onClick = onPatientIconClick,
+                if (cita.lugar.isNotEmpty()) {
+                    Text(
+                        "Lugar: ${cita.lugar}",
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
 
-                        )
-                )
+            if (cita.animalId.isNotEmpty()) {
+                Column(
+                    modifier = Modifier.constrainAs(patient) {
+                        top.linkTo(time.bottom)
+                        end.linkTo(parent.end)
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.dog),
+                        contentDescription = "Ver expediente del paciente",
+                        tint = Color.Unspecified,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clickable(onClick = onPatientIconClick)
+                            .clip(CircleShape)
+                    )
+                    Text(
+                        "Paciente",
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }

@@ -3,13 +3,13 @@ package com.proyecto.huellitas_callejeras.remote.dto
 import java.util.UUID
 
 data class CitaDTO(
-    val id_citas: String,
+    val id: String,
     val titulo: String,
     val fechaCita: String,
     val motivo: String,
     val lugar: String,
     val fechaRealizacion: String,
-    val animalitoId: UUID?
+    val animalId: UUID?
 )
 
 data class CitaRequest(
@@ -18,5 +18,5 @@ data class CitaRequest(
     val motivo: String,
     val lugar: String,
     val fechaRealizacion: String,
-    val animalitoId: UUID?
+    val animalId: UUID?
 )

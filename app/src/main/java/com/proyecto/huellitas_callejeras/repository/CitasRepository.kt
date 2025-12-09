@@ -34,7 +34,7 @@ class CitasRepositoryImpl(
 
     private fun dtoToDomain(dto: CitaDTO?): Cita {
         return Cita(
-            idCitas = dto?.id_citas.toString(),
+            id = dto?.id.toString(),
             titulo = dto?.titulo ?: "sin titulo",
             fechaRealizacion = dto?.fechaRealizacion ?: LocalDateTime.now().format(
                 DateTimeFormatter.ISO_LOCAL_DATE_TIME),
@@ -42,7 +42,7 @@ class CitasRepositoryImpl(
                 DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             motivo = dto?.motivo ?: "sin motivo",
             lugar = dto?.lugar ?: "sin lugar",
-            animalitoId = dto?.animalitoId?.toString() ?: ""
+            animalId = dto?.animalId?.toString() ?: ""
         )
     }
 
@@ -53,8 +53,8 @@ class CitasRepositoryImpl(
             motivo = cita.motivo,
             lugar = cita.lugar,
             fechaRealizacion = cita.fechaRealizacion,
-            animalitoId = try {
-                if (cita.animalitoId.isNotBlank()) UUID.fromString(cita.animalitoId) else null
+            animalId = try {
+                if (cita.animalId.isNotBlank()) UUID.fromString(cita.animalId) else null
             } catch (e: Exception) {
                 null
             }
@@ -111,7 +111,7 @@ class CitasRepositoryImpl(
         try {
             val service = getAuthenticatedService()
             val body = domainToRequest(cita)
-            val response = service.updateCita(cita.idCitas, body)
+            val response = service.updateCita(cita.id, body)
 
             if (!response.success) {
                 throw Exception(response.message ?: "Error al actualizar la cita")

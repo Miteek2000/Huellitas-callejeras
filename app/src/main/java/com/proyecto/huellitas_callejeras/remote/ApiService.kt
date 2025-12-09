@@ -20,12 +20,16 @@ import com.proyecto.huellitas_callejeras.remote.dto.RescateRequest
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDTO
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoMedicamentoRequest
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoRequest
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface ApiService {
@@ -48,16 +52,38 @@ interface ApiService {
     suspend fun deleteAnimalito(@Path("id") id: String)
 
     @POST("animal/crear-con-rescate")
-    suspend fun createAnimalitoConRescate(@Body body: AnimalRescateRequest): ApiResponse<AnimalRescateResponse>
+    suspend fun createAnimalitoConRescate(
+        @Body request: AnimalRescateRequest
+    ): ApiResponse<AnimalRescateResponse>
 
-    @PUT("animal/{id}/actualizar-con-rescate")
+    @Multipart
+    @POST("animal/crear-con-rescate")
+    suspend fun createAnimalitoConRescateConImagen(
+        @Part("animal") animal: RequestBody,
+        @Part("rescate") rescate: RequestBody,
+        @Part imagen: MultipartBody.Part?
+    ): ApiResponse<AnimalRescateResponse>
+
+    @PUT("animal/{id}/con-rescate")
     suspend fun updateAnimalitoConRescate(
         @Path("id") id: String,
-        @Body body: AnimalRescateRequest
+        @Body request: AnimalRescateRequest
+    ): ApiResponse<AnimalRescateResponse>
+
+    @Multipart
+    @PUT("animal/{id}/actualizar-con-rescate")
+    suspend fun updateAnimalitoConRescateConImagen(
+        @Path("id") id: String,
+        @Part("animal") animal: RequestBody,
+        @Part("rescate") rescate: RequestBody,
+        @Part imagen: MultipartBody.Part?
     ): ApiResponse<AnimalRescateResponse>
 
     @GET("animal/{id}/con-rescate")
-    suspend fun getAnimalitoConRescate(@Path("id") id: String): ApiResponse<AnimalRescateResponse>
+    suspend fun getAnimalitoConRescate(
+        @Path("id") id: String
+    ): ApiResponse<AnimalRescateResponse>
+
     @GET("citas")
     suspend fun getCitas(): ApiResponse<List<CitaDTO>>
 

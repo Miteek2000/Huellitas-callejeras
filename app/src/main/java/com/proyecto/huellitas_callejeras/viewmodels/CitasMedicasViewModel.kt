@@ -24,7 +24,6 @@ class CitasMedicasViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(CitasUiState())
     val uiState = _uiState.asStateFlow()
 
-    // Estado del calendario
     private val _calendar = MutableStateFlow(Calendar.getInstance())
     val calendar = _calendar.asStateFlow()
 
@@ -62,10 +61,10 @@ class CitasMedicasViewModel : ViewModel() {
 
     fun onAnimalSelected(animal: Animal) {
         _selectedAnimal.value = animal
-        // Actualizar el animalitoId en la cita en edición
+
         _uiState.value.cita?.let { currentCita ->
             _uiState.update {
-                it.copy(cita = currentCita.copy(animalitoId = animal.idAnimal))
+                it.copy(cita = currentCita.copy(animalId = animal.idAnimal))
             }
         }
     }
@@ -97,9 +96,22 @@ class CitasMedicasViewModel : ViewModel() {
         }
     }
 
-    // MÉTODOS DEL CALENDARIO - CORREGIDOS
     fun onDateSelected(dateMillis: Long) {
         _selectedDate.value = dateMillis
+        filtrarCitasPorFecha(dateMillis)
+    }
+    fun filtrarCitasPorFecha(dateMillis: Long) {
+        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val selectedDateFormatted = formatter.format(Date(dateMillis))
+
+        val citasFiltradas = uiState.value.citas.filter { cita ->
+            val citaDateFormatted = formatDateForCalendar(cita.fechaCita)
+            citaDateFormatted == selectedDateFormatted
+        }
+
+        _uiState.update {
+            it.copy(citasFiltradasPorFecha = citasFiltradas)
+        }
     }
 
     fun onMonthChanged(isNext: Boolean) {
@@ -118,7 +130,6 @@ class CitasMedicasViewModel : ViewModel() {
         _calendar.value = currentCalendar
     }
 
-    // Propiedades computadas para el calendario
     val datesWithAppointments: Set<String>
         get() = uiState.value.citas.mapNotNull { cita ->
             try {
@@ -143,10 +154,9 @@ class CitasMedicasViewModel : ViewModel() {
             }
         }
 
-    // Función auxiliar para formatear fechas
     private fun formatDateForCalendar(dateString: String): String? {
         return try {
-            // Intentar parsear diferentes formatos de fecha que vienen de tu API
+
             val formats = listOf(
                 "yyyy-MM-dd'T'HH:mm:ss'Z'",
                 "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
@@ -162,7 +172,7 @@ class CitasMedicasViewModel : ViewModel() {
                         return formatter.format(date)
                     }
                 } catch (e: Exception) {
-                    // Continuar con el siguiente formato
+
                 }
             }
             null
@@ -171,14 +181,13 @@ class CitasMedicasViewModel : ViewModel() {
         }
     }
 
-    // Métodos existentes de tu ViewModel...
     fun onPatientSelected(animal: Animal) {
         _selectedAnimal.value = animal
     }
 
     fun onPatientIconClicked(cita: Cita): String? {
-        return if (cita.animalitoId.isNotEmpty()) {
-            cita.animalitoId
+        return if (cita.animalId.isNotEmpty()) {
+            cita.animalId
         } else {
             null
         }
@@ -233,7 +242,7 @@ class CitasMedicasViewModel : ViewModel() {
             try {
                 repository.updateCita(cita)
                 val nuevasCitas = _uiState.value.citas.map {
-                    if (it.idCitas == cita.idCitas) cita else it
+                    if (it.id == cita.id) cita else it
                 }
                 _uiState.update {
                     it.copy(
@@ -258,7 +267,7 @@ class CitasMedicasViewModel : ViewModel() {
             _uiState.update { it.copy(loading = true, error = null) }
             try {
                 repository.deleteCita(id)
-                val nuevasCitas = _uiState.value.citas.filterNot { it.idCitas == id }
+                val nuevasCitas = _uiState.value.citas.filterNot { it.id == id }
                 _uiState.update {
                     it.copy(
                         citas = nuevasCitas,
@@ -277,7 +286,6 @@ class CitasMedicasViewModel : ViewModel() {
         }
     }
 
-    // Métodos para manejar el estado de edición
     fun setEditingCita(cita: Cita?) {
         _uiState.update { it.copy(cita = cita, error = null) }
     }
@@ -295,11 +303,11 @@ class CitasMedicasViewModel : ViewModel() {
     fun saveCita(onSuccess: (() -> Unit)? = null) {
         val cita = _uiState.value.cita
         cita?.let {
-            if (it.idCitas.isNotEmpty()) {
+            if (it.id.isNotEmpty()) {
                 editarCita(it, onSuccess)
             } else {
-                val citaParaCrear = if (it.idCitas.isEmpty()) {
-                    it.copy(idCitas = UUID.randomUUID().toString())
+                val citaParaCrear = if (it.id.isEmpty()) {
+                    it.copy(id = UUID.randomUUID().toString())
                 } else {
                     it
                 }
@@ -310,13 +318,13 @@ class CitasMedicasViewModel : ViewModel() {
 
     fun nuevaCitaVacia(): Cita {
         return Cita(
-            idCitas = "",
+            id = "",
             titulo = "",
             fechaRealizacion = "",
             fechaCita = "",
             motivo = "",
             lugar = "",
-            animalitoId = _selectedAnimal.value?.idAnimal ?: ""
+            animalId = _selectedAnimal.value?.idAnimal ?: ""
         )
     }
 

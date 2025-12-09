@@ -38,9 +38,8 @@ class DependencyProvider private constructor(private val context: Context) {
             getInstance(context)
         }
 
-        // Propiedades estáticas para acceso rápido desde ViewModels
-        // Deben inicializarse llamando a initialize() primero
-
+        lateinit var context: Context
+            private set
         lateinit var animalRepository: AnimalRepository
             private set
 
@@ -52,6 +51,7 @@ class DependencyProvider private constructor(private val context: Context) {
 
         fun setup(context: Context) {
             val provider = getInstance(context)
+            this.context = context.applicationContext
             animalRepository = provider.animalRepository
             citasRepository = provider.citasRepository
             authService = provider.authService

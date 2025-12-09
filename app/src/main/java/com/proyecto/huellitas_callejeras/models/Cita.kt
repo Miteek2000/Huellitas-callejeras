@@ -5,11 +5,11 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Cita(
-    val idCitas: String,
+    val id: String,
     val titulo: String,
     val fechaRealizacion: String,
     val fechaCita: String,
     val motivo: String,
     val lugar: String,
-    val animalitoId: String
+    val animalId: String
 ) : Parcelable

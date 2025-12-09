@@ -61,14 +61,14 @@ fun EditarCitaScreen(
     LaunchedEffect(citaId) {
         if (citaId != null && citaId.isNotEmpty()) {
 
-            if (uiState.cita?.idCitas != citaId) {
+            if (uiState.cita?.id != citaId) {
                 viewModel.getCitaPorId(citaId) { cita ->
                     cita?.let {
                         viewModel.setEditingCita(it)
 
-                        if (it.animalitoId.isNotEmpty()) {
+                        if (it.animalId.isNotEmpty()) {
                             val animal = allAnimals.find { animal ->
-                                animal.idAnimal == it.animalitoId
+                                animal.idAnimal == it.animalId
                             }
                             animal?.let { foundAnimal ->
                                 viewModel.setSelectedAnimal(foundAnimal)
@@ -80,14 +80,13 @@ fun EditarCitaScreen(
                 }
             }
         } else {
-            // Modo creación
+
             if (uiState.cita == null) {
                 viewModel.setEditingCita(viewModel.nuevaCitaVacia())
             }
         }
     }
 
-    // Mostrar loading
     if (loading && allAnimals.isEmpty()) {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -223,7 +222,7 @@ fun EditarCitaScreen(
                             cita.fechaCita.isNotEmpty() &&
                             cita.lugar.isNotEmpty() &&
                             cita.motivo.isNotEmpty() &&
-                            cita.animalitoId.isNotEmpty() &&
+                            cita.animalId.isNotEmpty() &&
                             !loading
                 ) {
                     Text(

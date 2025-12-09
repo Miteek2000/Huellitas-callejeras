@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proyecto.huellitas_callejeras.data.DependencyProvider
+import com.proyecto.huellitas_callejeras.remote.AuthService
 import com.proyecto.huellitas_callejeras.remote.dto.AnimalRequest
 import com.proyecto.huellitas_callejeras.remote.dto.RescateRequest
 import com.proyecto.huellitas_callejeras.repository.AnimalRepository
@@ -18,16 +19,19 @@ import java.util.TimeZone
 
 class ExpedienteViewModel : ViewModel() {
     private val repository: AnimalRepository = DependencyProvider.animalRepository
+    private val authService: AuthService = DependencyProvider.authService
     private val _uiState = MutableStateFlow(ExpedienteUiState())
     val uiState = _uiState.asStateFlow()
 
     fun init(patientId: String?, editable: Boolean) {
-        if (patientId == null) {
-            _uiState.update { it.copy(isEditing = editable) }
-            return
-        }
-
         viewModelScope.launch {
+            val rescatistaId = authService.getRescatistaId() ?: ""
+
+            if (patientId == null) {
+                _uiState.update { it.copy(isEditing = editable, rescatistaId = rescatistaId) }
+                return@launch
+            }
+
             _uiState.update { it.copy(loading = true, error = null) }
 
             try {
@@ -76,7 +80,7 @@ class ExpedienteViewModel : ViewModel() {
                             lugarRescate = rescate.lugar,
                             condicionesRescate = rescate.descripcion,
                             fechaIngreso = rescate.fechaIngreso,
-                            rescatistaId = animalito.rescatistaId ?: "",
+                            rescatistaId = animalito.rescatistaId ?: rescatistaId,
                             isEditing = editable
                         )
                     }
@@ -96,13 +100,17 @@ class ExpedienteViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = null) }
 
-            val fechaIngreso = state.fechaIngreso
-            if (fechaIngreso.isNullOrBlank()) {
+            val rescatistaId = if (state.rescatistaId.isBlank()) {
+                authService.getRescatistaId() ?: ""
+            } else {
+                state.rescatistaId
+            }
+
+            if (rescatistaId.isBlank()) {
                 _uiState.update {
                     it.copy(
                         loading = false,
-                        error = "La fecha de ingreso es requerida",
-                        fechaIngresoError = true
+                        error = "No se pudo identificar al rescatista. Por favor, inicia sesión nuevamente."
                     )
                 }
                 return@launch
@@ -116,7 +124,7 @@ class ExpedienteViewModel : ViewModel() {
                 sexo = state.sexo,
                 peso = state.peso.toDoubleOrNull() ?: 0.0,
                 estado = state.estadoSelected,
-                rescatistaId = state.rescatistaId,
+                rescatistaId = rescatistaId,
                 fechaSalida = state.fechaSalida
             )
 
@@ -127,9 +135,18 @@ class ExpedienteViewModel : ViewModel() {
 
             try {
                 val response = if (state.id == null) {
-                    repository.createConRescate(animalRequest, rescateRequest)
+                    repository.createConRescate(
+                        animalRequest,
+                        rescateRequest,
+                        state.selectedImageUri
+                    )
                 } else {
-                    repository.updateConRescate(state.id, animalRequest, rescateRequest)
+                    repository.updateConRescate(
+                        state.id,
+                        animalRequest,
+                        rescateRequest,
+                        state.selectedImageUri
+                    )
                 }
 
                 if (response.success) {
@@ -230,12 +247,11 @@ class ExpedienteViewModel : ViewModel() {
         val edadError = currentState.edad.isBlank() || currentState.edad.toIntOrNull() == null
         val sexoError = currentState.sexo.isBlank()
         val pesoError = currentState.peso.isBlank() || currentState.peso.toDoubleOrNull() == null
-        val fechaIngresoError = currentState.fechaIngreso.isNullOrBlank()
         val lugarRescateError = currentState.lugarRescate.isBlank()
         val condicionesRescateError = currentState.condicionesRescate.isBlank()
 
         val hasError = nombreError || especieError || edadError || sexoError ||
-                pesoError || fechaIngresoError || lugarRescateError || condicionesRescateError
+                pesoError || lugarRescateError || condicionesRescateError
 
         if (!hasError) {
             saveAnimalConRescate(onSuccess)
@@ -246,7 +262,6 @@ class ExpedienteViewModel : ViewModel() {
                 edadError = false,
                 sexoError = false,
                 pesoError = false,
-                fechaIngresoError = false,
                 lugarRescateError = false,
                 condicionesRescateError = false
             ) }
@@ -257,7 +272,6 @@ class ExpedienteViewModel : ViewModel() {
                 edadError = edadError,
                 sexoError = sexoError,
                 pesoError = pesoError,
-                fechaIngresoError = fechaIngresoError,
                 lugarRescateError = lugarRescateError,
                 condicionesRescateError = condicionesRescateError
             ) }
