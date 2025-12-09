@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.data.remote.dto
+package com.proyecto.huellitas_callejeras.remote.dto
 
 import com.google.gson.annotations.SerializedName
 

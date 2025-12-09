@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.ui.screens
+package com.proyecto.huellitas_callejeras.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -13,17 +13,15 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.proyecto.huellitas_callejeras.ui.components.HeaderBar
-import com.proyecto.huellitas_callejeras.ui.viewmodel.MedicamentoViewModel
+import com.proyecto.huellitas_callejeras.screens.components.HeaderBar
+import com.proyecto.huellitas_callejeras.viewmodel.MedicamentoViewModel
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 

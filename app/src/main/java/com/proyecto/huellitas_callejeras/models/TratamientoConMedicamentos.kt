@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.data.model
+package com.proyecto.huellitas_callejeras.models
 
 import androidx.room.Embedded
 import androidx.room.Relation

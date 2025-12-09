@@ -1,10 +1,8 @@
-package com.proyecto.huellitas_callejeras.data.repository
+package com.proyecto.huellitas_callejeras.repository
 
-import com.proyecto.huellitas_callejeras.data.dao.MedicamentoDao
-import com.proyecto.huellitas_callejeras.data.model.Medicamento
-import com.proyecto.huellitas_callejeras.data.remote.ApiService
-import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoDto
-import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoRequestDto
+import com.proyecto.huellitas_callejeras.remote.ApiService
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoDto
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoRequestDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException

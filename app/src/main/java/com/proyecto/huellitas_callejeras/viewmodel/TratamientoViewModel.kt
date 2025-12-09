@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.ui.viewmodel
+package com.proyecto.huellitas_callejeras.viewmodel
 
 import android.os.Build
 import android.util.Log
@@ -6,14 +6,13 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.proyecto.huellitas_callejeras.data.model.Tratamiento
-import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
-import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoInTratamientoDto
-import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoCreateRequestDto
-import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
+import com.proyecto.huellitas_callejeras.models.Tratamiento
+import com.proyecto.huellitas_callejeras.models.TratamientoConMedicamentos
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoInTratamientoDto
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoCreateRequestDto
+import com.proyecto.huellitas_callejeras.repository.TratamientoRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter

@@ -1,14 +1,10 @@
-package com.proyecto.huellitas_callejeras.data.repository
+package com.proyecto.huellitas_callejeras.repository
 
-import com.google.gson.Gson
-import com.proyecto.huellitas_callejeras.data.dao.MedicamentoDao
-import com.proyecto.huellitas_callejeras.data.dao.TratamientoDao
-import com.proyecto.huellitas_callejeras.data.model.Medicamento
-import com.proyecto.huellitas_callejeras.data.model.Tratamiento
-import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
-import com.proyecto.huellitas_callejeras.data.remote.ApiService
-import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoCreateRequestDto
-import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoDto
+import com.proyecto.huellitas_callejeras.models.Tratamiento
+import com.proyecto.huellitas_callejeras.models.TratamientoConMedicamentos
+import com.proyecto.huellitas_callejeras.remote.ApiService
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoCreateRequestDto
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext

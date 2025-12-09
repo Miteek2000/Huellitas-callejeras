@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.data.remote
+package com.proyecto.huellitas_callejeras.remote
 
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder

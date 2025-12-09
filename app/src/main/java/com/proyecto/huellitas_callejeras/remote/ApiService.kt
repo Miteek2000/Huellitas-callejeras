@@ -1,8 +1,10 @@
-package com.proyecto.huellitas_callejeras.data.remote
+package com.proyecto.huellitas_callejeras.remote
 
-import com.proyecto.huellitas_callejeras.data.remote.dto.*
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import com.proyecto.huellitas_callejeras.remote.dto.ApiResponse
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoDto
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoRequestDto
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoCreateRequestDto
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDto
 import retrofit2.Response
 import retrofit2.http.*
 

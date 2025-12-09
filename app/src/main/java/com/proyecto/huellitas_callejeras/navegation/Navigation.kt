@@ -1,9 +1,8 @@
-package com.proyecto.huellitas_callejeras
+package com.proyecto.huellitas_callejeras.navegation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -11,35 +10,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.proyecto.huellitas_callejeras.data.database.AppDatabase
-import com.proyecto.huellitas_callejeras.data.remote.ApiClient
-import com.proyecto.huellitas_callejeras.data.repository.MedicamentoRepository
-import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
-import com.proyecto.huellitas_callejeras.ui.screens.MedicamentoFormScreen
-import com.proyecto.huellitas_callejeras.ui.screens.TratamientoScreen
-import com.proyecto.huellitas_callejeras.ui.viewmodel.MedicamentoViewModel
-import com.proyecto.huellitas_callejeras.ui.viewmodel.MedicamentoViewModelFactory
-import com.proyecto.huellitas_callejeras.ui.viewmodel.TratamientoViewModel
-import com.proyecto.huellitas_callejeras.ui.viewmodel.TratamientoViewModelFactory
+import com.proyecto.huellitas_callejeras.screens.MedicamentoFormScreen
+import com.proyecto.huellitas_callejeras.screens.TratamientoScreen
+import com.proyecto.huellitas_callejeras.viewmodel.MedicamentoViewModel
+import com.proyecto.huellitas_callejeras.viewmodel.TratamientoViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationGraph(
     navController: NavHostController = rememberNavController(),
 ) {
-    val context = LocalContext.current
-    val database = AppDatabase.getDatabase(context)
-    val apiService = ApiClient.instance
-
-    val tratamientoRepository = TratamientoRepository(
-        apiService = apiService,
-        tratamientoDao = database.tratamientoDao(),
-        medicamentoDao = database.medicamentoDao()
-    )
-    val medicamentoRepository = MedicamentoRepository(
-        apiService = apiService,
-        medicamentoDao = database.medicamentoDao()
-    )
 
     NavHost(
         navController = navController,
@@ -47,7 +27,6 @@ fun NavigationGraph(
     ) {
         composable("tratamiento") {
             val tratamientoViewModel: TratamientoViewModel = viewModel(
-                factory = TratamientoViewModelFactory(tratamientoRepository)
             )
             TratamientoScreen(
                 viewModel = tratamientoViewModel,
@@ -68,11 +47,10 @@ fun NavigationGraph(
             val medicamentoId = backStackEntry.arguments?.getInt("medicamentoId") ?: -1
 
             val medicamentoViewModel: MedicamentoViewModel = viewModel(
-                factory = MedicamentoViewModelFactory(medicamentoRepository)
+
             )
 
             medicamentoViewModel.cargarMedicamento(tratamientoId, medicamentoId)
-
 
             MedicamentoFormScreen(
                 viewModel = medicamentoViewModel,

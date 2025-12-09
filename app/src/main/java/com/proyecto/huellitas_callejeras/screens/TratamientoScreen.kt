@@ -1,4 +1,4 @@
-package com.proyecto.huellitas_callejeras.ui.screens
+package com.proyecto.huellitas_callejeras.screens
 
 import android.net.Uri
 import android.os.Build
@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -65,10 +64,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.proyecto.huellitas_callejeras.R
-import com.proyecto.huellitas_callejeras.data.model.Medicamento
-import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoInTratamientoDto
-import com.proyecto.huellitas_callejeras.ui.components.HeaderBar
-import com.proyecto.huellitas_callejeras.ui.viewmodel.TratamientoViewModel
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoInTratamientoDto
+import com.proyecto.huellitas_callejeras.screens.components.HeaderBar
+import com.proyecto.huellitas_callejeras.viewmodel.TratamientoViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
