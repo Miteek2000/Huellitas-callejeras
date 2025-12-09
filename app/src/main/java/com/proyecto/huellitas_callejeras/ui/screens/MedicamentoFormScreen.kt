@@ -3,7 +3,6 @@ package com.proyecto.huellitas_callejeras.ui.screens
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.proyecto.huellitas_callejeras.data.remote.dto.NuevoMedicamentoResult
 import com.proyecto.huellitas_callejeras.ui.components.HeaderBar
 import com.proyecto.huellitas_callejeras.ui.viewmodel.MedicamentoViewModel
 import java.time.Instant
@@ -32,7 +32,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MedicamentoFormScreen(
     viewModel: MedicamentoViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: (NuevoMedicamentoResult?) -> Unit
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -64,7 +64,7 @@ fun MedicamentoFormScreen(
             IconButton(
                 onClick = {
                     viewModel.limpiarFormulario()
-                    onNavigateBack()
+                    onNavigateBack(null)
                 },
                 modifier = Modifier.padding(16.dp)
             ) {
@@ -152,11 +152,13 @@ fun MedicamentoFormScreen(
                             Text("Fecha de Conclusión", fontSize = 13.sp, color = Color.Black, modifier = Modifier.padding(bottom = 4.dp))
                             OutlinedTextField(
                                 value = formState.fechaConclusion,
-                                onValueChange = {}, // Not needed as it's read-only
+                                onValueChange = {},
                                 readOnly = true,
-                                modifier = Modifier.fillMaxWidth().height(48.dp).clickable { showDatePicker = true },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
                                 trailingIcon = {
-                                    Icon(Icons.Default.EditCalendar, contentDescription = "Seleccionar fecha")
+                                    IconButton(onClick = { showDatePicker = true }) {
+                                        Icon(Icons.Default.EditCalendar, contentDescription = "Seleccionar fecha")
+                                    }
                                 },
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.White,
@@ -173,7 +175,7 @@ fun MedicamentoFormScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                              Button(
-                                onClick = onNavigateBack,
+                                onClick = { onNavigateBack(null) },
                                 modifier = Modifier.weight(1f).height(40.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                                 shape = RoundedCornerShape(4.dp)
@@ -183,7 +185,7 @@ fun MedicamentoFormScreen(
                             Button(
                                 onClick = {
                                     viewModel.guardarMedicamento {
-                                        onNavigateBack()
+                                        onNavigateBack(it)
                                     }
                                 },
                                 enabled = !isLoading,

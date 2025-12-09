@@ -1,23 +1,14 @@
 package com.proyecto.huellitas_callejeras.data.repository
 
-import com.google.gson.Gson
-import com.proyecto.huellitas_callejeras.data.dao.MedicamentoDao
-import com.proyecto.huellitas_callejeras.data.dao.TratamientoDao
-import com.proyecto.huellitas_callejeras.data.model.Medicamento
-import com.proyecto.huellitas_callejeras.data.model.Tratamiento
-import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
 import com.proyecto.huellitas_callejeras.data.remote.ApiService
 import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoCreateRequestDto
 import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoDto
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
 class TratamientoRepository(
-    private val apiService: ApiService,
-    private val tratamientoDao: TratamientoDao,
-    private val medicamentoDao: MedicamentoDao
+    private val apiService: ApiService
 ) {
 
     suspend fun createTratamiento(tratamientoRequest: TratamientoCreateRequestDto): Result<TratamientoDto> {
@@ -54,35 +45,5 @@ class TratamientoRepository(
                 Result.failure(e)
             }
         }
-    }
-
-
-    fun obtenerTodosLosTratamientosConMedicamentos(): Flow<List<TratamientoConMedicamentos>> {
-        return tratamientoDao.obtenerTratamientosConMedicamentos()
-    }
-
-    suspend fun insertarTratamiento(tratamiento: Tratamiento) {
-        tratamientoDao.insertarTratamiento(tratamiento)
-    }
-
-    suspend fun actualizarTratamiento(tratamiento: Tratamiento) {
-        tratamientoDao.actualizarTratamiento(tratamiento)
-    }
-
-    suspend fun eliminarTratamientoYMedicamentos(tratamientoId: Int) {
-        val tratamiento = Tratamiento(id = tratamientoId, nombre = "", fechaInicio = "", fechaConclusion = "")
-        tratamientoDao.eliminarTratamiento(tratamiento)
-    }
-
-    suspend fun obtenerMedicamentoPorId(id: Int): Medicamento? {
-        return medicamentoDao.obtenerMedicamentoPorId(id)
-    }
-
-    suspend fun insertarMedicamento(medicamento: Medicamento) {
-        medicamentoDao.insertarMedicamento(medicamento)
-    }
-
-    suspend fun actualizarMedicamento(medicamento: Medicamento) {
-        medicamentoDao.actualizarMedicamento(medicamento)
     }
 }

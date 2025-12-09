@@ -6,14 +6,15 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.proyecto.huellitas_callejeras.data.model.Medicamento
 import com.proyecto.huellitas_callejeras.data.model.Tratamiento
 import com.proyecto.huellitas_callejeras.data.model.TratamientoConMedicamentos
 import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoInTratamientoDto
+import com.proyecto.huellitas_callejeras.data.remote.dto.NuevoMedicamentoResult
 import com.proyecto.huellitas_callejeras.data.remote.dto.TratamientoCreateRequestDto
 import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -23,7 +24,6 @@ class TratamientoViewModel(
     private val repository: TratamientoRepository
 ) : ViewModel() {
 
-    // --- Estados para la UI (Base de datos local) ---
     private val _tratamientosConMedicamentos = MutableStateFlow<List<TratamientoConMedicamentos>>(emptyList())
     val tratamientosConMedicamentos: StateFlow<List<TratamientoConMedicamentos>> = _tratamientosConMedicamentos.asStateFlow()
 
@@ -33,7 +33,6 @@ class TratamientoViewModel(
     private val _showFormulario = MutableStateFlow(false)
     val showFormulario: StateFlow<Boolean> = _showFormulario.asStateFlow()
 
-    // --- Estados para operaciones de Red ---
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -42,12 +41,6 @@ class TratamientoViewModel(
 
     private val _saveSuccess = MutableStateFlow(false)
     val saveSuccess: StateFlow<Boolean> = _saveSuccess.asStateFlow()
-
-    init {
-        cargarTratamientosLocales()
-    }
-
-    // --- Operaciones de Red ---
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun guardarTratamientoRemoto(
@@ -78,6 +71,7 @@ class TratamientoViewModel(
                 result.onSuccess {
                     Log.d("TratamientoViewModel", "Respuesta exitosa del backend: $it")
                     _saveSuccess.value = true
+                    // Podríamos re-cargar los tratamientos desde la API aquí si es necesario
                 }.onFailure {
                     Log.e("TratamientoViewModel", "Error del backend: ${it.message}", it)
                     _error.value = it.message ?: "Ocurrió un error desconocido"
@@ -92,22 +86,32 @@ class TratamientoViewModel(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun agregarMedicamentoLocal(medicamentoResult: NuevoMedicamentoResult) {
+        val tratamientoActual = _tratamientosConMedicamentos.value.getOrNull(_selectedTratamientoIndex.value)
+        if (tratamientoActual != null) {
+            val nuevoMedicamento = Medicamento(
+                tratamientoId = tratamientoActual.tratamiento.id,
+                nombre = medicamentoResult.nombre,
+                fechaInicio = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                fechaConclusion = "",
+                dosis = medicamentoResult.dosis,
+                frecuencia = medicamentoResult.frecuencia,
+                idApi = UUID.fromString(medicamentoResult.id)
+            )
+
+            val medicamentosActualizados = tratamientoActual.medicamentos + nuevoMedicamento
+            val tratamientoActualizado = tratamientoActual.copy(medicamentos = medicamentosActualizados)
+
+            val listaActualizada = _tratamientosConMedicamentos.value.toMutableList()
+            listaActualizada[_selectedTratamientoIndex.value] = tratamientoActualizado
+            _tratamientosConMedicamentos.value = listaActualizada
+        }
+    }
+
     fun resetSaveStatus() {
         _saveSuccess.value = false
         _error.value = null
-    }
-
-    // --- Operaciones de Base de Datos Local ---
-
-    private fun cargarTratamientosLocales() {
-        viewModelScope.launch {
-            repository.obtenerTodosLosTratamientosConMedicamentos().collect { tratamientos ->
-                _tratamientosConMedicamentos.value = tratamientos
-                if (tratamientos.isNotEmpty() && _selectedTratamientoIndex.value >= tratamientos.size) {
-                    _selectedTratamientoIndex.value = tratamientos.size - 1
-                }
-            }
-        }
     }
 
     fun seleccionarTratamiento(index: Int) {
@@ -119,34 +123,27 @@ class TratamientoViewModel(
         _showFormulario.value = mostrar
     }
 
-    fun agregarNuevoTratamiento() {
-        viewModelScope.launch {
-            val nuevoNumero = _tratamientosConMedicamentos.value.size + 1
-            repository.insertarTratamiento(
-                Tratamiento(nombre = "tratamiento $nuevoNumero", fechaInicio = "", fechaConclusion = "")
-            )
-            _selectedTratamientoIndex.value = _tratamientosConMedicamentos.value.size
-            _showFormulario.value = true
-        }
-    }
-
     fun eliminarTratamiento(tratamientoId: Int) {
-        viewModelScope.launch {
-            repository.eliminarTratamientoYMedicamentos(tratamientoId)
+        val updatedList = _tratamientosConMedicamentos.value.filterNot { it.tratamiento.id == tratamientoId }
+        _tratamientosConMedicamentos.value = updatedList
+        if (_selectedTratamientoIndex.value >= updatedList.size && updatedList.isNotEmpty()) {
+            _selectedTratamientoIndex.value = updatedList.size - 1
+        } else if (updatedList.isEmpty()) {
+            _selectedTratamientoIndex.value = 0
         }
     }
 
-    fun actualizarFechaInicio(tratamientoId: Int, fecha: String) {
-        viewModelScope.launch {
-            val tratamiento = _tratamientosConMedicamentos.value
-                .find { it.tratamiento.id == tratamientoId }
-                ?.tratamiento
-
-            tratamiento?.let {
-                repository.actualizarTratamiento(it.copy(fechaInicio = fecha))
-            }
-        }
+    fun agregarNuevoTratamiento() {
+       val nuevoNumero = _tratamientosConMedicamentos.value.size + 1
+       val nuevoTratamiento = TratamientoConMedicamentos(
+           tratamiento = Tratamiento(id = (0..Int.MAX_VALUE).random(), nombre = "tratamiento $nuevoNumero", fechaInicio = "", fechaConclusion = ""),
+           medicamentos = emptyList()
+       )
+        _tratamientosConMedicamentos.value += nuevoTratamiento
+       _selectedTratamientoIndex.value = _tratamientosConMedicamentos.value.lastIndex
+       _showFormulario.value = true
     }
+
 }
 
 class TratamientoViewModelFactory(

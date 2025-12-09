@@ -1,7 +1,5 @@
 package com.proyecto.huellitas_callejeras.data.repository
 
-import com.proyecto.huellitas_callejeras.data.dao.MedicamentoDao
-import com.proyecto.huellitas_callejeras.data.model.Medicamento
 import com.proyecto.huellitas_callejeras.data.remote.ApiService
 import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoDto
 import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoRequestDto
@@ -10,10 +8,8 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 
 class MedicamentoRepository(
-    private val apiService: ApiService,
-    private val medicamentoDao: MedicamentoDao
+    private val apiService: ApiService
 ) {
-
 
     suspend fun getAllMedicamentosFromApi(): Result<List<MedicamentoDto>> {
         return withContext(Dispatchers.IO) {
@@ -82,23 +78,5 @@ class MedicamentoRepository(
                 Result.failure(e)
             }
         }
-    }
-
-
-
-    suspend fun obtenerMedicamentoPorId(id: Int): Medicamento? {
-        return medicamentoDao.obtenerMedicamentoPorId(id)
-    }
-
-    suspend fun insertarMedicamentoLocal(medicamento: Medicamento) {
-        medicamentoDao.insertarMedicamento(medicamento)
-    }
-
-    suspend fun actualizarMedicamentoLocal(medicamento: Medicamento) {
-        medicamentoDao.actualizarMedicamento(medicamento)
-    }
-
-    suspend fun eliminarMedicamentoLocal(medicamento: Medicamento){
-        medicamentoDao.eliminarMedicamento(medicamento)
     }
 }

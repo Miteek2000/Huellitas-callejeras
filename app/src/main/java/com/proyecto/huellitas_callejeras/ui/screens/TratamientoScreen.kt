@@ -54,6 +54,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,7 @@ import com.proyecto.huellitas_callejeras.data.model.Medicamento
 import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoInTratamientoDto
 import com.proyecto.huellitas_callejeras.ui.components.HeaderBar
 import com.proyecto.huellitas_callejeras.ui.viewmodel.TratamientoViewModel
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -80,6 +82,7 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TratamientoScreen(
+    animalId: String,
     viewModel: TratamientoViewModel,
     onNavigateToMedicamento: (Int, Int) -> Unit
 ) {
@@ -92,6 +95,7 @@ fun TratamientoScreen(
     val saveSuccess by viewModel.saveSuccess.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var tratamientoToDelete by remember { mutableStateOf<Int?>(null) }
@@ -119,7 +123,7 @@ fun TratamientoScreen(
 
     LaunchedEffect(saveSuccess, error) {
         if (saveSuccess) {
-            snackbarHostState.showSnackbar("Guardar")
+            snackbarHostState.showSnackbar("Tratamiento guardado con éxito")
             viewModel.resetSaveStatus()
         }
         error?.let {
@@ -292,40 +296,47 @@ fun TratamientoScreen(
             if (selectedTratamiento != null) {
                 Button(
                     onClick = {
-                        val tratamientoActual = selectedTratamiento.tratamiento
-                        val medicamentosActuales = selectedTratamiento.medicamentos
+                        scope.launch {
+                            val tratamientoActual = selectedTratamiento.tratamiento
+                            val medicamentosActuales = selectedTratamiento.medicamentos
 
-                        val medicamentosDto = medicamentosActuales.mapNotNull {
-                            val fechaConclusionInstant = if (it.fechaConclusion.isNotBlank()) LocalDate.parse(it.fechaConclusion, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC) else null
-                            val dosis = it.dosis.toFloatOrNull() ?: 0f
-                            val repeticion = it.frecuencia.toFloatOrNull() ?: 0f
+                            val medicamentosDto = medicamentosActuales.mapNotNull { med ->
+                                try {
+                                    val fechaConclusionInstant = if (med.fechaConclusion.isNotBlank()) LocalDate.parse(med.fechaConclusion, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC) else null
+                                    val dosis = med.dosis.toFloat()
+                                    val repeticion = med.frecuencia.toFloat()
 
-                            MedicamentoInTratamientoDto(
-                                medicamentoId = UUID.randomUUID(), // OBTENER EL ID REAL DEL MEDICAMENTO
-                                nombre = it.nombre,
-                                dosis = dosis,
-                                repeticion = repeticion,
-                                fechaConclusion = fechaConclusionInstant
-                            )
-                        }
-
-                        val fechaInicioParaEnviar = selectedDate?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?:
-                            if(tratamientoActual.fechaInicio.isBlank()) {
-                                LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-                            } else {
-                                tratamientoActual.fechaInicio
+                                    MedicamentoInTratamientoDto(
+                                        medicamentoId = med.idApi ?: UUID.randomUUID(), // Usar idApi si existe, si no, generar uno nuevo
+                                        nombre = med.nombre,
+                                        dosis = dosis,
+                                        repeticion = repeticion,
+                                        fechaConclusion = fechaConclusionInstant
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e("TratamientoScreen", "No se pudo mapear el medicamento con id local ${med.id}. Error: ${e.message}")
+                                    null // Omite este medicamento si falla la conversión
+                                }
                             }
 
-                        Log.d("TratamientoScreen", "Guardando tratamiento...")
-                        Log.d("TratamientoScreen", "Animal ID: 5265a1b4-ca82-4c8c-b2aa-9fd968b49b50")
-                        Log.d("TratamientoScreen", "Fecha Inicio: $fechaInicioParaEnviar")
-                        Log.d("TratamientoScreen", "Medicamentos: $medicamentosDto")
+                            val fechaInicioParaEnviar = selectedDate?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?:
+                                if(tratamientoActual.fechaInicio.isBlank()) {
+                                    LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+                                } else {
+                                    tratamientoActual.fechaInicio
+                                }
 
-                        viewModel.guardarTratamientoRemoto(
-                            animalId = "5265a1b4-ca82-4c8c-b2aa-9fd968b49b50", // Tu UUID del backend
-                            fechaInicio = fechaInicioParaEnviar,
-                            medicamentos = medicamentosDto
-                        )
+                            Log.d("TratamientoScreen", "Guardando tratamiento...")
+                            Log.d("TratamientoScreen", "Animal ID: $animalId")
+                            Log.d("TratamientoScreen", "Fecha Inicio: $fechaInicioParaEnviar")
+                            Log.d("TratamientoScreen", "Medicamentos: $medicamentosDto")
+
+                            viewModel.guardarTratamientoRemoto(
+                                animalId = animalId,
+                                fechaInicio = fechaInicioParaEnviar,
+                                medicamentos = medicamentosDto
+                            )
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -337,7 +348,7 @@ fun TratamientoScreen(
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                     } else {
-                        Text("Guardar Tratamiento en Servidor", color = Color.White)
+                        Text("Guardar Tratamiento", color = Color.White)
                     }
                 }
             }
@@ -512,6 +523,11 @@ fun MedicamentoCard(
                 Text(text = medicamento.nombre, fontWeight = FontWeight.Bold)
                 Text(text = "Dosis: ${medicamento.dosis}")
                 Text(text = "Frecuencia: ${medicamento.frecuencia}")
+                if (medicamento.fechaConclusion.isNotBlank()) {
+                    Text(text = "Conclusión: ${medicamento.fechaConclusion}")
+                } else {
+                    Text(text = "Tratamiento continuo")
+                }
             }
             IconButton(
                 onClick = { onEdit(medicamento.id) },

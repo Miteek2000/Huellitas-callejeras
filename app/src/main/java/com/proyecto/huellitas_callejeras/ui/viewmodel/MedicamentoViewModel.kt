@@ -5,12 +5,12 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.proyecto.huellitas_callejeras.data.model.Medicamento
+import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoRequestDto
+import com.proyecto.huellitas_callejeras.data.remote.dto.NuevoMedicamentoResult
 import com.proyecto.huellitas_callejeras.data.repository.MedicamentoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -31,7 +31,7 @@ data class FormState(
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MedicamentoViewModel(
-    private val repository: MedicamentoRepository
+    private val medicamentoRepository: MedicamentoRepository
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow(FormState())
@@ -44,27 +44,8 @@ class MedicamentoViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     fun cargarMedicamento(tratamientoId: Int, medicamentoId: Int) {
-        viewModelScope.launch {
-            val med = if (medicamentoId != -1 && medicamentoId != 0) {
-                repository.obtenerMedicamentoPorId(medicamentoId)
-            } else {
-                null
-            }
-
-            if (med != null) {
-                _formState.value = FormState(
-                    tratamientoId = tratamientoId,
-                    medicamentoId = medicamentoId,
-                    nombre = med.nombre,
-                    dosis = med.dosis,
-                    frecuencia = med.frecuencia,
-                    fechaInicio = med.fechaInicio,
-                    fechaConclusion = med.fechaConclusion
-                )
-            } else {
-                limpiarFormulario(tratamientoId = tratamientoId)
-            }
-        }
+        // TODO: Esta función necesita ser reimplementada.
+        limpiarFormulario(tratamientoId = tratamientoId)
     }
 
     fun limpiarFormulario(tratamientoId: Int? = _formState.value.tratamientoId) {
@@ -92,31 +73,39 @@ class MedicamentoViewModel(
         _formState.update { it.copy(fechaConclusion = fecha) }
     }
 
-    fun guardarMedicamento(onSuccess: () -> Unit) {
+    fun guardarMedicamento(onSuccess: (NuevoMedicamentoResult?) -> Unit) {
         if (!validarFormulario()) return
 
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 val state = _formState.value
-                val medicamento = Medicamento(
-                    id = state.medicamentoId ?: 0,
-                    tratamientoId = state.tratamientoId ?: throw IllegalStateException("Tratamiento ID no puede ser nulo"),
-                    nombre = state.nombre,
-                    dosis = state.dosis,
-                    frecuencia = state.frecuencia,
-                    fechaInicio = state.fechaInicio,
-                    fechaConclusion = state.fechaConclusion
+                val request = MedicamentoRequestDto(
+                    nombre = state.nombre
                 )
 
-                if (medicamento.id == 0) {
-                    repository.insertarMedicamentoLocal(medicamento)
+                if (state.medicamentoId == null || state.medicamentoId == -1) {
+                    medicamentoRepository.createMedicamento(request).fold(
+                        onSuccess = { medicamentoCreado ->
+                            val result = NuevoMedicamentoResult(
+                                id = medicamentoCreado.id,
+                                nombre = medicamentoCreado.nombre,
+                                dosis = state.dosis,
+                                frecuencia = state.frecuencia
+                            )
+                            onSuccess(result)
+                        },
+                        onFailure = {
+                            _error.value = it.message
+                        }
+                    )
                 } else {
-                    repository.actualizarMedicamentoLocal(medicamento)
+                    onSuccess(null)
                 }
-                onSuccess()
+
             } catch (e: Exception) {
-                _error.value = "Error al guardar el medicamento: ${e.message}"
+                _error.value = e.message
             } finally {
                 _isLoading.value = false
             }
@@ -149,11 +138,13 @@ class MedicamentoViewModel(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-class MedicamentoViewModelFactory(private val repository: MedicamentoRepository) : ViewModelProvider.Factory {
+class MedicamentoViewModelFactory(
+    private val medicamentoRepository: MedicamentoRepository
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MedicamentoViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MedicamentoViewModel(repository) as T
+            return MedicamentoViewModel(medicamentoRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

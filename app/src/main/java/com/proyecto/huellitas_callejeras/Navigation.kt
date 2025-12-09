@@ -3,7 +3,8 @@ package com.proyecto.huellitas_callejeras
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -11,8 +12,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.proyecto.huellitas_callejeras.data.database.AppDatabase
 import com.proyecto.huellitas_callejeras.data.remote.ApiClient
+import com.proyecto.huellitas_callejeras.data.remote.dto.NuevoMedicamentoResult
 import com.proyecto.huellitas_callejeras.data.repository.MedicamentoRepository
 import com.proyecto.huellitas_callejeras.data.repository.TratamientoRepository
 import com.proyecto.huellitas_callejeras.ui.screens.MedicamentoFormScreen
@@ -27,29 +28,41 @@ import com.proyecto.huellitas_callejeras.ui.viewmodel.TratamientoViewModelFactor
 fun NavigationGraph(
     navController: NavHostController = rememberNavController(),
 ) {
-    val context = LocalContext.current
-    val database = AppDatabase.getDatabase(context)
     val apiService = ApiClient.instance
 
-    val tratamientoRepository = TratamientoRepository(
-        apiService = apiService,
-        tratamientoDao = database.tratamientoDao(),
-        medicamentoDao = database.medicamentoDao()
-    )
-    val medicamentoRepository = MedicamentoRepository(
-        apiService = apiService,
-        medicamentoDao = database.medicamentoDao()
-    )
+    val tratamientoRepository = TratamientoRepository(apiService = apiService)
+    val medicamentoRepository = MedicamentoRepository(apiService = apiService)
 
     NavHost(
         navController = navController,
-        startDestination = "tratamiento"
+        startDestination = "tratamiento/{animalId}"
     ) {
-        composable("tratamiento") {
+        composable(
+            route = "tratamiento/{animalId}",
+            arguments = listOf(navArgument("animalId") {
+                type = NavType.StringType
+                defaultValue = "5265a1b4-ca82-4c8c-b2aa-9fd968b49b50" // ID de ejemplo
+            })
+        ) {
+            backStackEntry ->
+            val animalId = backStackEntry.arguments?.getString("animalId") ?: ""
             val tratamientoViewModel: TratamientoViewModel = viewModel(
                 factory = TratamientoViewModelFactory(tratamientoRepository)
             )
+
+            val newMedicamentoResult = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.getLiveData<NuevoMedicamentoResult>("nuevo_medicamento_result")?.observeAsState()
+
+            LaunchedEffect(newMedicamentoResult?.value) {
+                newMedicamentoResult?.value?.let {
+                    tratamientoViewModel.agregarMedicamentoLocal(it)
+                    navController.currentBackStackEntry?.savedStateHandle?.remove<NuevoMedicamentoResult>("nuevo_medicamento_result")
+                }
+            }
+
             TratamientoScreen(
+                animalId = animalId,
                 viewModel = tratamientoViewModel,
                 onNavigateToMedicamento = { tratamientoId, medicamentoId ->
                     navController.navigate("medicamento/$tratamientoId/$medicamentoId")
@@ -73,10 +86,14 @@ fun NavigationGraph(
 
             medicamentoViewModel.cargarMedicamento(tratamientoId, medicamentoId)
 
-
             MedicamentoFormScreen(
                 viewModel = medicamentoViewModel,
-                onNavigateBack = {
+                onNavigateBack = { medicamentoResult ->
+                    medicamentoResult?.let {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("nuevo_medicamento_result", it)
+                    }
                     navController.popBackStack()
                 }
             )
