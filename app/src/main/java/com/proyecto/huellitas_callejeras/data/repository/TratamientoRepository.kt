@@ -56,7 +56,6 @@ class TratamientoRepository(
         }
     }
 
-    // --- Métodos de la Base de Datos Local (DAO) ---
 
     fun obtenerTodosLosTratamientosConMedicamentos(): Flow<List<TratamientoConMedicamentos>> {
         return tratamientoDao.obtenerTratamientosConMedicamentos()

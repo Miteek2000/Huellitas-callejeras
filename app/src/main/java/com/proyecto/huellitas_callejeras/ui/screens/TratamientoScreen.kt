@@ -1,6 +1,11 @@
 package com.proyecto.huellitas_callejeras.ui.screens
 
+import android.net.Uri
 import android.os.Build
+import android.provider.OpenableColumns
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
@@ -31,6 +37,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +48,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,17 +58,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.data.model.Medicamento
 import com.proyecto.huellitas_callejeras.data.remote.dto.MedicamentoInTratamientoDto
 import com.proyecto.huellitas_callejeras.ui.components.HeaderBar
 import com.proyecto.huellitas_callejeras.ui.viewmodel.TratamientoViewModel
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,10 +95,31 @@ fun TratamientoScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var tratamientoToDelete by remember { mutableStateOf<Int?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var imageName by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+        if (uri == null) {
+            imageName = null
+        } else {
+            context.contentResolver.query(uri, null, null, null, null)?.use {
+                val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                it.moveToFirst()
+                imageName = it.getString(nameIndex)
+            }
+        }
+    }
 
     LaunchedEffect(saveSuccess, error) {
         if (saveSuccess) {
-            snackbarHostState.showSnackbar("¡Tratamiento guardado en el servidor!")
+            snackbarHostState.showSnackbar("Guardar")
             viewModel.resetSaveStatus()
         }
         error?.let {
@@ -91,6 +127,36 @@ fun TratamientoScreen(
             viewModel.resetSaveStatus()
         }
     }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDatePicker = false
+                        selectedDate = datePickerState.selectedDateMillis?.let {
+                            Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -161,6 +227,53 @@ fun TratamientoScreen(
                 if (tratamientosConMedicamentos.isEmpty()) {
                     item { EmptyStateCard() }
                 } else {
+
+                    item{
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Fecha Inicio", fontSize = 16.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = selectedDate?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?: "Seleccionar fecha",
+                                    modifier = Modifier.clickable { showDatePicker = true }
+                                )
+                                IconButton(onClick = { showDatePicker = true }) {
+                                    Icon(Icons.Default.DateRange, contentDescription = "Seleccionar fecha de inicio")
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Receta", fontSize = 16.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                imageName?.let {
+                                    Text(text = it, modifier = Modifier.padding(end = 8.dp))
+                                }
+                                IconButton(onClick = { imagePickerLauncher.launch("image/*") }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.addimage),
+                                        contentDescription = "Subir imagen de receta",
+                                        tint = Color.Unspecified
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+
                     item {
                         AgregarMedicamentoButton {
                             selectedTratamiento?.tratamiento?.id?.let { id -> onNavigateToMedicamento(id, -1) }
@@ -183,27 +296,30 @@ fun TratamientoScreen(
                         val medicamentosActuales = selectedTratamiento.medicamentos
 
                         val medicamentosDto = medicamentosActuales.mapNotNull {
-                            val fechaInicioInstant = if (it.fechaInicio.isNotBlank()) LocalDate.parse(it.fechaInicio, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC) else null
                             val fechaConclusionInstant = if (it.fechaConclusion.isNotBlank()) LocalDate.parse(it.fechaConclusion, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC) else null
+                            val dosis = it.dosis.toFloatOrNull() ?: 0f
+                            val repeticion = it.frecuencia.toFloatOrNull() ?: 0f
 
-                            if(fechaInicioInstant != null && fechaConclusionInstant != null) {
-                                MedicamentoInTratamientoDto(
-                                    nombre = it.nombre,
-                                    dosis = it.dosis,
-                                    repeticion = it.frecuencia,
-                                    fechaInicio = fechaInicioInstant,
-                                    fechaConclusion = fechaConclusionInstant
-                                )
+                            MedicamentoInTratamientoDto(
+                                medicamentoId = UUID.randomUUID(), // OBTENER EL ID REAL DEL MEDICAMENTO
+                                nombre = it.nombre,
+                                dosis = dosis,
+                                repeticion = repeticion,
+                                fechaConclusion = fechaConclusionInstant
+                            )
+                        }
+
+                        val fechaInicioParaEnviar = selectedDate?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?:
+                            if(tratamientoActual.fechaInicio.isBlank()) {
+                                LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
                             } else {
-                                null
+                                tratamientoActual.fechaInicio
                             }
-                        }
 
-                        val fechaInicioParaEnviar = if (tratamientoActual.fechaInicio.isBlank()) {
-                            LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-                        } else {
-                            tratamientoActual.fechaInicio
-                        }
+                        Log.d("TratamientoScreen", "Guardando tratamiento...")
+                        Log.d("TratamientoScreen", "Animal ID: 5265a1b4-ca82-4c8c-b2aa-9fd968b49b50")
+                        Log.d("TratamientoScreen", "Fecha Inicio: $fechaInicioParaEnviar")
+                        Log.d("TratamientoScreen", "Medicamentos: $medicamentosDto")
 
                         viewModel.guardarTratamientoRemoto(
                             animalId = "5265a1b4-ca82-4c8c-b2aa-9fd968b49b50", // Tu UUID del backend
