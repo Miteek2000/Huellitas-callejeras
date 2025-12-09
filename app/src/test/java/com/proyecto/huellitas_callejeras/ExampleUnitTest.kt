@@ -1,4 +1,4 @@
-package com.example.huellitas_callejeras
+package com.proyecto.huellitas_callejeras
 
 import org.junit.Test
 
