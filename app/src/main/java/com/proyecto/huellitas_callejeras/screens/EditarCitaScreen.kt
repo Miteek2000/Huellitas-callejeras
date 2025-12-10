@@ -2,6 +2,7 @@ package com.proyecto.huellitas_callejeras.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,11 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.screens.components.AnimalSearchDropdown
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 
@@ -31,6 +34,7 @@ fun EditarCitaScreen(
     val uiState by viewModel.uiState.collectAsState()
     val allAnimals by viewModel.allAnimals.collectAsState()
     val selectedAnimal by viewModel.selectedAnimal.collectAsState()
+    val datePickerState = rememberDatePickerState()
 
     val loading = uiState.loading
     val error = uiState.error
@@ -77,6 +81,25 @@ fun EditarCitaScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (uiState.showDatePickerDialog) {
+        DatePickerDialog(
+            onDismissRequest = { viewModel.onShowDatePickerDialog(false) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.onDateSelectedForCita(datePickerState.selectedDateMillis) })
+                {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onShowDatePickerDialog(false) }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 
@@ -141,7 +164,6 @@ fun EditarCitaScreen(
             )
         }
 
-        // Formulario
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -186,6 +208,13 @@ fun EditarCitaScreen(
                 value = cita.fechaCita,
                 onValueChange = { newValue ->
                     viewModel.updateEditingCita { it.copy(fechaCita = newValue) }
+                },
+                trailingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.calender),
+                        contentDescription = "Calendar Icon",
+                        modifier = Modifier.clickable { viewModel.onShowDatePickerDialog(true) }
+                    )
                 }
             )
 
@@ -254,7 +283,9 @@ fun CitaTextField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(text = label, color = Color.Black, fontSize = 14.sp)
@@ -273,6 +304,8 @@ fun CitaTextField(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black
             ),
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
             singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
