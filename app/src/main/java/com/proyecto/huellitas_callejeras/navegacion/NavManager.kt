@@ -1,23 +1,24 @@
-// app/src/main/java/com/proyecto/huellitas_callejeras/navegacion/NavManager.kt
 package com.proyecto.huellitas_callejeras.navegacion
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.proyecto.huellitas_callejeras.screens.EditarCitaScreen
-import com.proyecto.huellitas_callejeras.screens.CitasMedicasScreen
-import com.proyecto.huellitas_callejeras.screens.ExpedienteScreen
-import com.proyecto.huellitas_callejeras.screens.GaleriaScreen
+import com.mayte.huellitas_callejeras.screens.InicioSesionScreen
+import com.proyecto.huellitas_callejeras.screens.*
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 import com.proyecto.huellitas_callejeras.viewmodels.ExpedienteViewModel
 import com.proyecto.huellitas_callejeras.viewmodels.GaleriaViewModel
-import androidx.navigation.NavType
-import com.mayte.huellitas_callejeras.screens.InicioSesionScreen
+import com.proyecto.huellitas_callejeras.viewmodel.TratamientoViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavManager() {
     val navController = rememberNavController()
@@ -65,7 +66,8 @@ fun NavManager() {
             CitasMedicasScreen(navController, citasMedicasViewModel)
         }
 
-        composable(AppScreens.EditarCitaScreen.route + "?id={id}",
+        composable(
+            AppScreens.EditarCitaScreen.route + "?id={id}",
             arguments = listOf(
                 navArgument("id") {
                     type = NavType.StringType
@@ -73,7 +75,7 @@ fun NavManager() {
                     nullable = true
                 }
             )
-            ){ backStackEntry ->
+        ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
             val citasMedicasViewModel: CitasMedicasViewModel = viewModel()
 
@@ -90,6 +92,63 @@ fun NavManager() {
             }
 
             EditarCitaScreen(navController, citasMedicasViewModel, id)
+        }
+
+        composable(
+            route = AppScreens.TratamientoScreen.route + "/{animalId}",
+            arguments = listOf(
+                navArgument("animalId") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val animalId = backStackEntry.arguments?.getString("animalId") ?: ""
+
+            val tratamientoViewModel: TratamientoViewModel = viewModel()
+
+            TratamientoScreen(
+                viewModel = tratamientoViewModel,
+                animalId = animalId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToMedicamento = { medicamentoId ->
+
+                    navController.navigate(
+                        AppScreens.MedicamentoFormScreen.route + "/$animalId/$medicamentoId"
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = AppScreens.MedicamentoFormScreen.route + "/{animalId}/{medicamentoId}",
+            arguments = listOf(
+                navArgument("animalId") {
+                    type = NavType.StringType
+                },
+                navArgument("medicamentoId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val animalId = backStackEntry.arguments?.getString("animalId") ?: ""
+            val medicamentoId = backStackEntry.arguments?.getInt("medicamentoId") ?: -1
+
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    "${AppScreens.TratamientoScreen.route}/$animalId"
+                )
+            }
+            val tratamientoViewModel: TratamientoViewModel = viewModel(parentEntry)
+
+            MedicamentoFormScreen(
+                viewModel = tratamientoViewModel,
+                medicamentoId = medicamentoId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

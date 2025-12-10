@@ -3,7 +3,7 @@ package com.proyecto.huellitas_callejeras.remote.dto
 import java.util.UUID
 
 data class RescateDTO(
-    val id: UUID,
+    val id: String,
     val fechaIngreso: String,
     val lugar: String,
     val descripcion: String,

@@ -12,3 +12,4 @@ data class TratamientoMedicamento(
     val repeticion: Double,
     val medicamento: Medicamento? = null
 ) : Parcelable
+

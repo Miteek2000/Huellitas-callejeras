@@ -15,11 +15,12 @@ import com.proyecto.huellitas_callejeras.remote.dto.CitaDTO
 import com.proyecto.huellitas_callejeras.remote.dto.CitaRequest
 import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoDTO
 import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoRequest
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoTratamientoDto
 import com.proyecto.huellitas_callejeras.remote.dto.RescateDTO
 import com.proyecto.huellitas_callejeras.remote.dto.RescateRequest
-import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDTO
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDto
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoMedicamentoRequest
-import com.proyecto.huellitas_callejeras.remote.dto.TratamientoRequest
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoResumenDto
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -104,31 +105,54 @@ interface ApiService {
 
 
 
+    @GET("tratamientos")
+    suspend fun getAllTratamientos(): Response<ApiResponse<List<TratamientoDto>>>
+
+    @GET("tratamientos/{id}")
+    suspend fun getTratamiento(@Path("id") id: String): Response<ApiResponse<TratamientoDto>>
+
+    @Multipart
+    @POST("tratamientos")
+    suspend fun createTratamiento(
+        @Part("tratamiento") tratamiento: RequestBody,
+        @Part archivo: MultipartBody.Part?
+    ): Response<ApiResponse<TratamientoDto>>
+
+    @Multipart
+    @PUT("tratamientos/{id}")
+    suspend fun updateTratamiento(
+        @Path("id") id: String,
+        @Part("tratamiento") tratamiento: RequestBody,
+        @Part archivo: MultipartBody.Part?
+    ): Response<ApiResponse<TratamientoDto>>
+
+    @DELETE("tratamientos/{id}")
+    suspend fun deleteTratamiento(@Path("id") id: String): Response<ApiResponse<Unit>>
+
     @GET("medicamentos")
-    suspend fun getMedicamentos(): List<MedicamentoDTO>
+    suspend fun getAllMedicamentos(): Response<ApiResponse<List<MedicamentoDTO>>>
 
     @POST("medicamentos")
-    suspend fun createMedicamento(@Body body: MedicamentoRequest): MedicamentoDTO
+    suspend fun createMedicamento(@Body request: MedicamentoRequest): Response<ApiResponse<MedicamentoDTO>>
 
-
-    @GET("tratamientos")
-    suspend fun getTratamientos(): List<TratamientoDTO>
-
-    @POST("tratamientos")
-    suspend fun createTratamiento(@Body body: TratamientoRequest): TratamientoDTO
-
-
-    @POST("tratamientos/{id}/medicamentos")
-    suspend fun agregarMedicamentoATratamiento(
+    @PUT("medicamentos/{id}")
+    suspend fun updateMedicamento(
         @Path("id") id: String,
-        @Body body: TratamientoMedicamentoRequest
-    )
+        @Body request: MedicamentoRequest
+    ): Response<ApiResponse<Unit>>
 
+    @DELETE("medicamentos/{id}")
+    suspend fun deleteMedicamento(@Path("id") id: String): Response<ApiResponse<Unit>>
 
-    @GET("rescate")
-    suspend fun getRescates(): List<RescateDTO>
+    @GET("tratamientos/animal/{animalId}")
+    suspend fun getTratamientosPorAnimal(
+        @Path("animalId") animalId: String
+    ): Response<ApiResponse<List<TratamientoResumenDto>>>
 
-    @POST("rescate")
-    suspend fun createRescate(@Body body: RescateRequest): RescateDTO
+    @GET("tratamientos/{tratamientoId}/medicamentos")
+    suspend fun getMedicamentosPorTratamiento(
+        @Path("tratamientoId") tratamientoId: String
+    ): Response<ApiResponse<List<MedicamentoTratamientoDto>>>
+
 }
 

@@ -52,7 +52,7 @@ import androidx.navigation.NavController
 import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.models.Cita
 import com.proyecto.huellitas_callejeras.models.Animal
-import com.proyecto.huellitas_callejeras.navegacion.AppScreens
+import com.proyecto.huellitas_callejeras.navegacion.NavManager
 import com.proyecto.huellitas_callejeras.ui.theme.Calendar
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 import androidx.compose.material.icons.filled.Add

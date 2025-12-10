@@ -1,9 +1,16 @@
-package com.proyecto.huellitas_callejeras.navegacion
-
+// AppScreens.kt
 sealed class AppScreens(val route: String) {
     object InicioSesion : AppScreens("inicio_sesion")
-    object GaleriaScreen : AppScreens("galeria_screen")
-    object ExpedienteScreen : AppScreens("expediente_screen")
-    object CitasMedicasScreen : AppScreens("citas_medicas_screen")
-    object EditarCitaScreen : AppScreens("editar_cita_screen")
+    object GaleriaScreen : AppScreens("galeria")
+    object ExpedienteScreen : AppScreens("expediente")
+    object CitasMedicasScreen : AppScreens("citas_medicas")
+    object EditarCitaScreen : AppScreens("editar_cita")
+
+    object TratamientoScreen : AppScreens("tratamiento") {
+        fun createRoute(animalId: String) = "$route/$animalId"
+    }
+
+    object MedicamentoFormScreen : AppScreens("medicamento_form") {
+        fun createRoute(animalId: String, medicamentoId: Int) = "$route/$animalId/$medicamentoId"
+    }
 }

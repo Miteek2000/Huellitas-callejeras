@@ -6,6 +6,8 @@ import com.proyecto.huellitas_callejeras.remote.RetrofitClient
 import com.proyecto.huellitas_callejeras.repository.AnimalRepository
 import com.proyecto.huellitas_callejeras.repository.CitasRepository
 import com.proyecto.huellitas_callejeras.repository.CitasRepositoryImpl
+import com.proyecto.huellitas_callejeras.repository.MedicamentoRepository
+import com.proyecto.huellitas_callejeras.repository.TratamientoRepository
 
 class DependencyProvider private constructor(private val context: Context) {
 
@@ -21,10 +23,17 @@ class DependencyProvider private constructor(private val context: Context) {
         CitasRepositoryImpl(apiService, context)
     }
 
+    val medicamentoRepository by lazy {
+        MedicamentoRepository(context)
+    }
+
+    val tratamientoRepository by lazy {
+        TratamientoRepository(context)
+    }
+
     companion object {
         @Volatile
         private var instance: DependencyProvider? = null
-
 
         fun getInstance(context: Context): DependencyProvider {
             return instance ?: synchronized(this) {
@@ -40,10 +49,17 @@ class DependencyProvider private constructor(private val context: Context) {
 
         lateinit var context: Context
             private set
+
         lateinit var animalRepository: AnimalRepository
             private set
 
         lateinit var citasRepository: CitasRepository
+            private set
+
+        lateinit var medicamentoRepository: MedicamentoRepository
+            private set
+
+        lateinit var tratamientoRepository: TratamientoRepository
             private set
 
         lateinit var authService: AuthService
@@ -54,6 +70,8 @@ class DependencyProvider private constructor(private val context: Context) {
             this.context = context.applicationContext
             animalRepository = provider.animalRepository
             citasRepository = provider.citasRepository
+            medicamentoRepository = provider.medicamentoRepository
+            tratamientoRepository = provider.tratamientoRepository
             authService = provider.authService
         }
     }

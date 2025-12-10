@@ -61,7 +61,6 @@ import coil.compose.AsyncImage
 import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.screens.components.FormDropDownMenu
 import com.proyecto.huellitas_callejeras.screens.components.FormTextField
-import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1
 import com.proyecto.huellitas_callejeras.viewmodels.ExpedienteViewModel
@@ -307,7 +306,7 @@ fun ExpedienteScreen(
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Button(
-                                    onClick = { /*TODO*/ },
+                                    onClick = { navController.navigate(AppScreens.TratamientoScreen.route + "/${uiState.id}") },
                                     enabled = uiState.isEditing,
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7AB659)),

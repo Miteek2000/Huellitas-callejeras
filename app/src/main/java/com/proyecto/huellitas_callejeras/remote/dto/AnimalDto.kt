@@ -39,5 +39,3 @@ data class RescateRequest(
     val lugar: String,
     val descripcion: String
 )
-
-

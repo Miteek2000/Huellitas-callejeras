@@ -54,7 +54,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.proyecto.huellitas_callejeras.R
 import com.proyecto.huellitas_callejeras.models.Animal
-import com.proyecto.huellitas_callejeras.navegacion.AppScreens
 import com.proyecto.huellitas_callejeras.ui.theme.pink1
 import com.proyecto.huellitas_callejeras.ui.theme.purple1
 import com.proyecto.huellitas_callejeras.viewmodels.GaleriaNavTarget
