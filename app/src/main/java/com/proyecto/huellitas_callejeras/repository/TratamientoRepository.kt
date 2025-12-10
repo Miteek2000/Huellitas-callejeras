@@ -7,8 +7,10 @@ import com.google.gson.Gson
 import com.proyecto.huellitas_callejeras.remote.ApiService
 import com.proyecto.huellitas_callejeras.remote.AuthService
 import com.proyecto.huellitas_callejeras.remote.RetrofitClient
+import com.proyecto.huellitas_callejeras.remote.dto.MedicamentoTratamientoDto
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoCreateRequestDto
 import com.proyecto.huellitas_callejeras.remote.dto.TratamientoDto
+import com.proyecto.huellitas_callejeras.remote.dto.TratamientoResumenDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -55,11 +57,10 @@ class TratamientoRepository(
     ): Result<TratamientoDto> {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d("TratamientoRepo", "=== CREANDO TRATAMIENTO ===")
 
                 val service = getAuthenticatedService()
 
-                // Convertir el objeto a JSON
+
                 val gson = Gson()
                 val tratamientoJson = gson.toJson(tratamientoRequest)
 
@@ -68,13 +69,9 @@ class TratamientoRepository(
                 val tratamientoBody = tratamientoJson.toRequestBody("application/json".toMediaTypeOrNull())
                 val recetaPart = uriToMultipartBody(recetaUri, "archivo")
 
-                Log.d("TratamientoRepo", "Receta incluida: ${recetaPart != null}")
 
-                // Llamada a la API
                 val response = service.createTratamiento(tratamientoBody, recetaPart)
 
-                Log.d("TratamientoRepo", "Respuesta código: ${response.code()}")
-                Log.d("TratamientoRepo", "Respuesta exitosa: ${response.isSuccessful}")
 
                 if (response.isSuccessful && response.body() != null) {
                     val apiResponse = response.body()!!
@@ -181,6 +178,63 @@ class TratamientoRepository(
                     Result.success(Unit)
                 } else {
                     val errorMsg = response.body()?.message ?: "Error de red: ${response.code()}"
+                    Result.failure(IOException(errorMsg))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun getTratamientoByAnimalId(animalId: String): Result<TratamientoResumenDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val service = getAuthenticatedService()
+                val response = service.getTratamientoByAnimalId(animalId)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success) {
+                        val tratamientos = apiResponse.data ?: emptyList()
+                        if (tratamientos.isNotEmpty()) {
+                            val tratamiento = tratamientos.first()
+                            val tratamientoUrlCompleta = if (tratamiento.recetaUrl?.startsWith("/") == true) {
+                                tratamiento.copy(recetaUrl = "http://34.195.100.95:8080${tratamiento.recetaUrl}")}else{
+                                    tratamiento
+                                }
+                            Result.success(tratamientoUrlCompleta)
+
+                        } else {
+                            Result.failure(Exception("No se encontraron tratamientos para este animal"))
+                        }
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorMsg = response.errorBody()?.string() ?: "Error ${response.code()}"
+                    Result.failure(IOException(errorMsg))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun getMedicamentosByTratamientoId(tratamientoId: String): Result<List<MedicamentoTratamientoDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val service = getAuthenticatedService()
+                val response = service.getMedicamentosByTratamientoId(tratamientoId)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success) {
+                        Result.success(apiResponse.data ?: emptyList())
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorMsg = response.errorBody()?.string() ?: "Error ${response.code()}"
                     Result.failure(IOException(errorMsg))
                 }
             } catch (e: Exception) {

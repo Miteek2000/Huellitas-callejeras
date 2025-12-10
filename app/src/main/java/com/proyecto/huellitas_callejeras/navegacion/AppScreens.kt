@@ -1,4 +1,4 @@
-// AppScreens.kt
+
 sealed class AppScreens(val route: String) {
     object InicioSesion : AppScreens("inicio_sesion")
     object GaleriaScreen : AppScreens("galeria")

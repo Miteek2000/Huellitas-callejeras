@@ -1,11 +1,8 @@
 package com.proyecto.huellitas_callejeras.remote.dto
 
-import java.time.Instant
-import java.util.UUID
-
 
 data class TratamientoCreateRequestDto(
-    val animalId: String,
+    val animalId: String?,
     val fechaInicio: String,
     val medicamentos: List<MedicamentoTratamientoDto>
 )

@@ -118,8 +118,8 @@ interface ApiService {
         @Part archivo: MultipartBody.Part?
     ): Response<ApiResponse<TratamientoDto>>
 
-    @Multipart
     @PUT("tratamientos/{id}")
+    @Multipart
     suspend fun updateTratamiento(
         @Path("id") id: String,
         @Part("tratamiento") tratamiento: RequestBody,
@@ -135,24 +135,19 @@ interface ApiService {
     @POST("medicamentos")
     suspend fun createMedicamento(@Body request: MedicamentoRequest): Response<ApiResponse<MedicamentoDTO>>
 
-    @PUT("medicamentos/{id}")
-    suspend fun updateMedicamento(
-        @Path("id") id: String,
-        @Body request: MedicamentoRequest
-    ): Response<ApiResponse<Unit>>
-
     @DELETE("medicamentos/{id}")
     suspend fun deleteMedicamento(@Path("id") id: String): Response<ApiResponse<Unit>>
 
     @GET("tratamientos/animal/{animalId}")
-    suspend fun getTratamientosPorAnimal(
+    suspend fun getTratamientoByAnimalId(
         @Path("animalId") animalId: String
     ): Response<ApiResponse<List<TratamientoResumenDto>>>
 
     @GET("tratamientos/{tratamientoId}/medicamentos")
-    suspend fun getMedicamentosPorTratamiento(
+    suspend fun getMedicamentosByTratamientoId(
         @Path("tratamientoId") tratamientoId: String
     ): Response<ApiResponse<List<MedicamentoTratamientoDto>>>
+
 
 }
 

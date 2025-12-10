@@ -59,12 +59,12 @@ class MedicamentoRepository(
             }
         }
     }
-
+/*
     suspend fun updateMedicamento(id: String, request: MedicamentoRequest): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val service = getAuthenticatedService()
-                val response = service.updateMedicamento(id, request)
+                val response = service.updateTratamiento(id, request)
                 if (response.isSuccessful && response.body() != null && response.body()!!.success) {
                     Result.success(Unit)
                 } else {
@@ -76,7 +76,7 @@ class MedicamentoRepository(
             }
         }
     }
-
+*/
     suspend fun deleteMedicamento(id: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
