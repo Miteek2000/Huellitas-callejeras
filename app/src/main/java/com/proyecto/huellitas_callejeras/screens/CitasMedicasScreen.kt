@@ -56,6 +56,7 @@ import com.proyecto.huellitas_callejeras.navegacion.NavManager
 import com.proyecto.huellitas_callejeras.ui.theme.Calendar
 import com.proyecto.huellitas_callejeras.viewmodels.CitasMedicasViewModel
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
@@ -83,9 +84,18 @@ fun CitasMedicasScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Citas Médicas") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Regresar a Expedientes"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF5B2D5B),
-                    titleContentColor = Color.White
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
                 )
             )
         },

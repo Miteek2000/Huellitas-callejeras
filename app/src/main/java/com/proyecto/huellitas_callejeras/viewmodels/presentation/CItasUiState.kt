@@ -7,5 +7,6 @@ data class CitasUiState(
     val citasFiltradasPorFecha: List<Cita> = emptyList(),
     val cita: Cita? = null,
     val loading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val showDatePickerDialog: Boolean = false
 )

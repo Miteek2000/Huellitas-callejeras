@@ -337,4 +337,21 @@ class CitasMedicasViewModel : ViewModel() {
         _uiState.update { it.copy(cita = null) }
         _selectedAnimal.value = null
     }
+
+    fun onShowDatePickerDialog(show: Boolean) {
+        _uiState.update { it.copy(showDatePickerDialog = show) }
+    }
+
+    fun onDateSelectedForCita(dateMillis: Long?) {
+        val dateString = if (dateMillis != null) {
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            sdf.format(Date(dateMillis))
+        } else {
+            ""
+        }
+
+        updateEditingCita { it.copy(fechaCita = dateString) }
+        onShowDatePickerDialog(false)
+    }
 }
